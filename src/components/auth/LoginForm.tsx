@@ -1,42 +1,138 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import LanguageToggle from '../common/LanguageToggle';
 import ThemeToggle from '../common/ThemeToggle';
 import LoadingSpinner from '../common/LoadingSpinner';
 
+interface LocationState {
+  message?: string;
+  email?: string;
+}
+
 const LoginForm: React.FC = () => {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  // Handle redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Handle messages from registration or other sources
+  useEffect(() => {
+    const state = location.state as LocationState;
+    if (state?.message) {
+      setSuccessMessage(state.message);
+      if (state.email) {
+        setFormData(prev => ({ ...prev, email: state.email }));
+      }
+      // Clear the state to prevent showing message on refresh
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
+
+  const validateForm = (): boolean => {
+    if (!formData.email) {
+      setError(t('validation.emailRequired'));
+      return false;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      setError(t('validation.emailInvalid'));
+      return false;
+    }
+    
+    if (!formData.password) {
+      setError(t('validation.passwordRequired'));
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
     setError('');
+    setSuccessMessage('');
 
     try {
       await login(formData.email, formData.password);
+      
+      // Handle remember me functionality
+      if (formData.rememberMe) {
+        localStorage.setItem('abathwa_remember_email', formData.email);
+      } else {
+        localStorage.removeItem('abathwa_remember_email');
+      }
+
+      // Redirect will be handled by the useEffect above
     } catch (err: any) {
-      setError(err.response?.data?.message || t('auth.invalidCredentials'));
+      console.error('Login error:', err);
+      
+      if (err.response?.status === 401) {
+        setError(t('auth.invalidCredentials'));
+      } else if (err.response?.status === 403) {
+        setError(t('auth.accountSuspended'));
+      } else if (err.response?.status === 429) {
+        setError(t('auth.tooManyAttempts'));
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError(t('errors.networkError'));
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value, type, checked } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+
+    // Clear error when user starts typing
+    if (error) {
+      setError('');
+    }
   };
+
+  // Load remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('abathwa_remember_email');
+    if (rememberedEmail) {
+      setFormData(prev => ({ 
+        ...prev, 
+        email: rememberedEmail,
+        rememberMe: true 
+      }));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -60,9 +156,18 @@ const LoginForm: React.FC = () => {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {/* Error Message */}
           {error && (
-            <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 text-error-700 dark:text-error-200 px-4 py-3 rounded-lg">
+            <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 text-error-700 dark:text-error-200 px-4 py-3 rounded-lg flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
               {error}
+            </div>
+          )}
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="bg-success-50 dark:bg-success-900 border border-success-200 dark:border-success-700 text-success-700 dark:text-success-200 px-4 py-3 rounded-lg">
+              {successMessage}
             </div>
           )}
 
@@ -118,20 +223,25 @@ const LoginForm: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
-                id="remember-me"
-                name="remember-me"
+                id="rememberMe"
+                name="rememberMe"
                 type="checkbox"
+                checked={formData.rememberMe}
+                onChange={handleChange}
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                 {t('auth.rememberMe')}
               </label>
             </div>
 
             <div className="text-sm">
-              <a href="/forgot-password" className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+              <Link 
+                to="/forgot-password" 
+                className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
+              >
                 {t('auth.forgotPassword')}
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -158,9 +268,12 @@ const LoginForm: React.FC = () => {
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {t('auth.dontHaveAccount')}{' '}
-              <a href="/register" className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+              <Link 
+                to="/signup" 
+                className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500"
+              >
                 {t('auth.signUpHere')}
-              </a>
+              </Link>
             </p>
           </div>
         </form>

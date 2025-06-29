@@ -7,6 +7,7 @@ import OfflineIndicator from './components/common/OfflineIndicator';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginForm from './components/auth/LoginForm';
+import SignupForm from './components/auth/SignupForm';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import DashboardOverview from './components/dashboard/DashboardOverview';
@@ -46,6 +47,7 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
+            <Route path="/signup" element={<SignupForm />} />
             
             {/* Protected Routes */}
             <Route
@@ -126,6 +128,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </AuthProvider>

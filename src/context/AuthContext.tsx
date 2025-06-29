@@ -7,13 +7,15 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
 }
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   register: (userData: any) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,12 +24,14 @@ type AuthAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_USER'; payload: { user: User; token: string } }
   | { type: 'CLEAR_USER' }
-  | { type: 'UPDATE_USER'; payload: Partial<User> };
+  | { type: 'UPDATE_USER'; payload: Partial<User> }
+  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'CLEAR_ERROR' };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
+      return { ...state, isLoading: action.payload, error: null };
     case 'SET_USER':
       return {
         ...state,
@@ -35,6 +39,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
+        error: null,
       };
     case 'CLEAR_USER':
       return {
@@ -43,11 +48,24 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         token: null,
         isAuthenticated: false,
         isLoading: false,
+        error: null,
       };
     case 'UPDATE_USER':
       return {
         ...state,
         user: state.user ? { ...state.user, ...action.payload } : null,
+        error: null,
+      };
+    case 'SET_ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        isLoading: false,
+      };
+    case 'CLEAR_ERROR':
+      return {
+        ...state,
+        error: null,
       };
     default:
       return state;
@@ -59,6 +77,7 @@ const initialState: AuthState = {
   token: null,
   isLoading: true,
   isAuthenticated: false,
+  error: null,
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -73,11 +92,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Verify token is still valid by fetching current user from production API
           const currentUser = await apiService.getCurrentUser();
           dispatch({ type: 'SET_USER', payload: { user: currentUser, token } });
-        } catch (error) {
+        } catch (error: any) {
           console.error('Token validation failed:', error);
-          // Clear invalid token
+          
+          // Clear invalid token and user data
           localStorage.removeItem('abathwa_token');
           localStorage.removeItem('abathwa_user');
+          
+          // Don't show error for expired tokens during initialization
           dispatch({ type: 'SET_LOADING', payload: false });
         }
       } else {
@@ -94,15 +116,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Call production login API
       const response = await apiService.login(email, password);
-      const { token, user } = response;
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Login failed');
+      }
+      
+      const { token, user } = response.data;
       
       // Store token and user data
       localStorage.setItem('abathwa_token', token);
       localStorage.setItem('abathwa_user', JSON.stringify(user));
       
       dispatch({ type: 'SET_USER', payload: { user, token } });
-    } catch (error) {
-      dispatch({ type: 'SET_LOADING', payload: false });
+    } catch (error: any) {
+      console.error('Login error:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message || 'Login failed' });
       throw error;
     }
   };
@@ -118,19 +146,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear local storage and state
       localStorage.removeItem('abathwa_token');
       localStorage.removeItem('abathwa_user');
+      localStorage.removeItem('abathwa_remember_email');
       dispatch({ type: 'CLEAR_USER' });
     }
   };
 
-  const register = async (userData: any) => {
+  const register = async (userData: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+    role: string;
+    organization_name?: string;
+  }) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
       // Call production registration API
-      await apiService.register(userData);
+      const response = await apiService.register(userData);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Registration failed');
+      }
+      
       dispatch({ type: 'SET_LOADING', payload: false });
-    } catch (error) {
-      dispatch({ type: 'SET_LOADING', payload: false });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message || 'Registration failed' });
       throw error;
     }
   };
@@ -138,7 +181,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (updates: Partial<User>) => {
     try {
       // Call production profile update API
-      const updatedUser = await apiService.updateProfile(updates);
+      const response = await apiService.updateProfile(updates);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Profile update failed');
+      }
+      
+      const updatedUser = response.data;
       dispatch({ type: 'UPDATE_USER', payload: updatedUser });
       
       // Update local storage
@@ -146,9 +195,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newUserData = { ...state.user, ...updatedUser };
         localStorage.setItem('abathwa_user', JSON.stringify(newUserData));
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      dispatch({ type: 'SET_ERROR', payload: error.message || 'Profile update failed' });
       throw error;
     }
+  };
+
+  const clearError = () => {
+    dispatch({ type: 'CLEAR_ERROR' });
   };
 
   return (
@@ -159,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         register,
         updateProfile,
+        clearError,
       }}
     >
       {children}
