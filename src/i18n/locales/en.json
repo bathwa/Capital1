@@ -21,7 +21,10 @@
     "reject": "Reject",
     "approve": "Approve",
     "accept": "Accept",
-    "decline": "Decline"
+    "decline": "Decline",
+    "tagline": "Connecting Zimbabwean entrepreneurs with investors for community-driven economic growth",
+    "offline": "You are offline",
+    "pending": "actions pending"
   },
   "auth": {
     "login": "Sign In",
@@ -44,9 +47,14 @@
     "invalidCredentials": "Invalid email or password",
     "registrationSuccess": "Registration successful! Please check your email.",
     "loginSuccess": "Welcome back!",
-    "logoutSuccess": "You have been signed out."
+    "logoutSuccess": "You have been signed out.",
+    "emailPlaceholder": "Enter your email address",
+    "passwordPlaceholder": "Enter your password",
+    "signingIn": "Signing in...",
+    "demoCredentials": "Demo Credentials for Testing"
   },
   "dashboard": {
+    "title": "Dashboard",
     "welcome": "Welcome back",
     "overview": "Overview",
     "recentActivity": "Recent Activity",
@@ -56,7 +64,24 @@
     "totalInvestments": "Total Investments",
     "activeOpportunities": "Active Opportunities",
     "pendingApprovals": "Pending Approvals",
-    "platformRevenue": "Platform Revenue"
+    "platformRevenue": "Platform Revenue",
+    "totalUsers": "Total Users",
+    "activeUsers": "Active Users",
+    "totalFunded": "Total Funded",
+    "lifetimeFunding": "Lifetime Funding",
+    "milestoneCompletion": "Milestone Completion Rate",
+    "portfolioROI": "Portfolio ROI",
+    "averageReturn": "Average Return",
+    "totalEarnings": "Total Earnings",
+    "rating": "Rating",
+    "recentReports": "Recent Reports",
+    "newReportsAvailable": "New Reports Available",
+    "alerts": "Alerts",
+    "performanceAlerts": "Performance Alerts",
+    "roleDescription": "You are logged in as a {{role}}",
+    "fromLastMonth": "from last month",
+    "monthlyFees": "Monthly Fees",
+    "noRecentActivity": "No recent activity to display"
   },
   "opportunities": {
     "title": "Opportunities",
@@ -77,7 +102,10 @@
     "publish": "Publish",
     "saveDraft": "Save as Draft",
     "riskAssessment": "Risk Assessment",
-    "dueDiligence": "Due Diligence"
+    "dueDiligence": "Due Diligence",
+    "activeOpportunities": "Active Opportunities",
+    "seekingFunding": "Seeking Funding",
+    "pendingReview": "Pending Review"
   },
   "investments": {
     "title": "Investments",
@@ -89,7 +117,12 @@
     "proofOfPayment": "Proof of Payment",
     "transactionReference": "Transaction Reference",
     "paymentStatus": "Payment Status",
-    "investmentStatus": "Investment Status"
+    "investmentStatus": "Investment Status",
+    "activeInvestments": "Active Investments",
+    "currentlyInvested": "Currently Invested",
+    "totalInvested": "Total Invested",
+    "lifetimeAmount": "Lifetime Amount",
+    "totalActive": "Total Active"
   },
   "milestones": {
     "title": "Milestones",
@@ -102,7 +135,8 @@
     "overdue": "Overdue",
     "completed": "Completed",
     "inProgress": "In Progress",
-    "planned": "Planned"
+    "planned": "Planned",
+    "requireAttention": "Require Attention"
   },
   "serviceProviders": {
     "title": "Service Providers",
@@ -115,7 +149,13 @@
     "acceptRequest": "Accept Request",
     "declineRequest": "Decline Request",
     "completeService": "Complete Service",
-    "uploadReport": "Upload Report"
+    "uploadReport": "Upload Report",
+    "activeRequests": "Active Requests",
+    "currentEngagements": "Current Engagements",
+    "completedServices": "Completed Services",
+    "successfullyDelivered": "Successfully Delivered",
+    "platformEarnings": "Platform Earnings",
+    "clientSatisfaction": "Client Satisfaction"
   },
   "pools": {
     "title": "Investment Pools",
@@ -128,7 +168,9 @@
     "members": "Members",
     "leaderPerformance": "Leader Performance",
     "rateLeader": "Rate Leader",
-    "meetingMinutes": "Meeting Minutes"
+    "meetingMinutes": "Meeting Minutes",
+    "memberships": "Pool Memberships",
+    "poolsJoined": "Pools Joined"
   },
   "agreements": {
     "title": "Agreements",
@@ -169,7 +211,9 @@
     "viewMeetingMinutes": "View Meeting Minutes",
     "viewMemberList": "View Member List",
     "permissionDenied": "Permission Denied",
-    "readOnlyAccess": "Read-only access"
+    "readOnlyAccess": "Read-only access",
+    "entitiesMonitored": "Entities Monitored",
+    "accessLevels": "Access Levels"
   },
   "settlement": {
     "title": "Settlement Plans",
@@ -239,6 +283,37 @@
     "supportPhone": "Support Phone",
     "supportEmail": "Support Email",
     "supportWhatsApp": "Support WhatsApp"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "entrepreneur": "Entrepreneur",
+    "investor": "Investor",
+    "serviceProvider": "Service Provider",
+    "observer": "Observer",
+    "user": "User"
+  },
+  "ai": {
+    "insights": "AI Insights",
+    "recommendations": "AI Recommendations",
+    "riskAssessment": "AI Risk Assessment",
+    "recommendedForYou": "Recommended For You",
+    "aiPoweredRecommendations": "AI-powered investment recommendations",
+    "analyzingReliability": "Analyzing reliability...",
+    "assessingRisk": "Assessing risk...",
+    "generatingRecommendations": "Generating recommendations...",
+    "analysisUnavailable": "AI analysis unavailable",
+    "assessmentUnavailable": "AI assessment unavailable",
+    "noRecommendationsAvailable": "No recommendations available",
+    "updatePreferencesForBetter": "Update your preferences for better recommendations",
+    "match": "match",
+    "whyRecommended": "Why recommended",
+    "riskFactors": "Risk Factors",
+    "suggestions": "AI Suggestions"
+  },
+  "risk": {
+    "low": "Low Risk",
+    "medium": "Medium Risk",
+    "high": "High Risk"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
