@@ -10,6 +10,7 @@ const USE_SUPABASE = import.meta.env.VITE_SUPABASE_URL && !USE_MOCK_API;
 
 class ApiService {
   private api: AxiosInstance;
+  private supabaseAvailable: boolean = true;
 
   constructor() {
     this.api = axios.create({
@@ -112,8 +113,8 @@ class ApiService {
     const url = originalRequest.url;
     
     try {
-      // Use Supabase if available, otherwise fall back to mock
-      const apiService = USE_SUPABASE ? supabaseApiService : mockApiService;
+      // Use mock API as fallback when Supabase is unavailable
+      const apiService = mockApiService;
       
       if (url.includes('/auth/login') && method === 'post') {
         const { email, password } = originalRequest.data;
@@ -147,10 +148,31 @@ class ApiService {
     }
   }
 
+  private async handleSupabaseError(operation: () => Promise<any>, fallbackOperation?: () => Promise<any>) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      if (error.message === 'SUPABASE_UNAVAILABLE' || error.message.includes('Failed to fetch')) {
+        this.supabaseAvailable = false;
+        console.warn('Supabase unavailable, falling back to mock API');
+        
+        if (fallbackOperation) {
+          return await fallbackOperation();
+        }
+        
+        throw new Error('Service temporarily unavailable. Please try again later.');
+      }
+      throw error;
+    }
+  }
+
   // Auth endpoints
   async login(email: string, password: string) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.login(email, password);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.login(email, password),
+        () => mockApiService.login(email, password)
+      );
     }
     
     if (USE_MOCK_API) {
@@ -173,8 +195,11 @@ class ApiService {
     role: string;
     organization_name?: string;
   }) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.register(userData);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.register(userData),
+        () => mockApiService.register(userData)
+      );
     }
     
     if (USE_MOCK_API) {
@@ -190,8 +215,11 @@ class ApiService {
   }
 
   async logout() {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.logout();
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.logout(),
+        () => mockApiService.logout()
+      );
     }
     
     if (USE_MOCK_API) {
@@ -204,8 +232,11 @@ class ApiService {
 
   // User endpoints
   async getCurrentUser() {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.getCurrentUser();
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.getCurrentUser(),
+        () => mockApiService.getCurrentUser()
+      );
     }
     
     if (USE_MOCK_API) {
@@ -217,8 +248,11 @@ class ApiService {
   }
 
   async updateProfile(updates: any) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.updateProfile(updates);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.updateProfile(updates),
+        () => mockApiService.updateProfile(updates)
+      );
     }
     
     if (USE_MOCK_API) {
@@ -230,8 +264,11 @@ class ApiService {
   }
 
   async getDashboardData() {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.getDashboardData();
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.getDashboardData(),
+        () => mockApiService.getDashboardData()
+      );
     }
     
     if (USE_MOCK_API) {
@@ -244,8 +281,10 @@ class ApiService {
 
   // Opportunities
   async getOpportunities(filters?: any) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.getOpportunities(filters);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.getOpportunities(filters)
+      );
     }
     
     const response = await this.api.get('/api/v1/opportunities', { params: filters });
@@ -253,8 +292,10 @@ class ApiService {
   }
 
   async createOpportunity(opportunityData: any) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.createOpportunity(opportunityData);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.createOpportunity(opportunityData)
+      );
     }
     
     const response = await this.api.post('/api/v1/opportunities', opportunityData);
@@ -263,8 +304,10 @@ class ApiService {
 
   // Investments
   async getInvestments(params?: any) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.getInvestments(params);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.getInvestments(params)
+      );
     }
     
     const response = await this.api.get('/api/v1/investments', { params });
@@ -272,8 +315,10 @@ class ApiService {
   }
 
   async createInvestmentOffer(offerData: any) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.createInvestmentOffer(offerData);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.createInvestmentOffer(offerData)
+      );
     }
     
     const response = await this.api.post('/api/v1/investment-offers', offerData);
@@ -287,8 +332,11 @@ class ApiService {
     page?: number; 
     limit?: number; 
   }) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.getNotifications(params);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.getNotifications(params),
+        () => mockApiService.getNotifications(params)
+      );
     }
     
     if (USE_MOCK_API) {
@@ -300,8 +348,11 @@ class ApiService {
   }
 
   async markNotificationAsRead(notificationId: string) {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.markNotificationAsRead(notificationId);
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.markNotificationAsRead(notificationId),
+        () => mockApiService.markNotificationAsRead(notificationId)
+      );
     }
     
     if (USE_MOCK_API) {
@@ -313,8 +364,11 @@ class ApiService {
   }
 
   async markAllNotificationsAsRead() {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.markAllNotificationsAsRead();
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.markAllNotificationsAsRead(),
+        () => mockApiService.markAllNotificationsAsRead()
+      );
     }
     
     if (USE_MOCK_API) {
@@ -327,8 +381,11 @@ class ApiService {
 
   // Health check
   async healthCheck() {
-    if (USE_SUPABASE) {
-      return await supabaseApiService.healthCheck();
+    if (USE_SUPABASE && this.supabaseAvailable) {
+      return await this.handleSupabaseError(
+        () => supabaseApiService.healthCheck(),
+        () => mockApiService.healthCheck()
+      );
     }
     
     if (USE_MOCK_API) {
