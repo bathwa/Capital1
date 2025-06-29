@@ -32,7 +32,12 @@
     "ongoing": "Ongoing",
     "date": "Date",
     "actions": "Actions",
-    "goHome": "Go Home"
+    "goHome": "Go Home",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "completed": "Completed",
+    "due": "Due",
+    "select": "Select"
   },
   "auth": {
     "login": "Sign In",
@@ -128,7 +133,8 @@
     "minInvestmentRequired": "Minimum investment is required and must be greater than 0",
     "endDateAfterStartDate": "End date must be after start date",
     "currentPasswordRequired": "Current password is required",
-    "newPasswordRequired": "New password is required"
+    "newPasswordRequired": "New password is required",
+    "stageRequirements": "Stage Requirements Issues"
   },
   "profile": {
     "title": "Profile",
@@ -140,7 +146,20 @@
     "changingPassword": "Changing password...",
     "updateSuccess": "Profile updated successfully",
     "passwordChangeSuccess": "Password changed successfully",
-    "notLoggedIn": "You are not logged in"
+    "notLoggedIn": "You are not logged in",
+    "dueDiligence": "Due Diligence",
+    "dueDiligenceProfile": "Due Diligence Profile",
+    "dueDiligenceUpdated": "Due diligence profile updated successfully",
+    "businessProfile": "Business Profile",
+    "legalCompliance": "Legal Compliance & History",
+    "businessRegistrationNumber": "Business Registration Number",
+    "legalStructure": "Legal Structure",
+    "hasCourtCases": "Has pending court cases or legal issues",
+    "courtCasesDetails": "Please provide details about court cases or legal issues",
+    "businessLocation": "Business Location & Facilities",
+    "primaryAddress": "Primary Business Address",
+    "facilityOwnership": "Facility Ownership Status",
+    "facilitySize": "Facility Size"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -170,7 +189,11 @@
     "roleDescription": "You are logged in as a {{role}}",
     "fromLastMonth": "from last month",
     "monthlyFees": "Monthly Fees",
-    "noRecentActivity": "No recent activity to display"
+    "noRecentActivity": "No recent activity to display",
+    "entrepreneurOverview": "Entrepreneur Dashboard Overview",
+    "fundingProgress": "Funding Progress",
+    "totalRaised": "Total Raised",
+    "fundingStageProgress": "Funding Stage Progress"
   },
   "opportunities": {
     "title": "Opportunities",
@@ -212,7 +235,17 @@
     "checkBackLater": "Check back later for new investment opportunities",
     "progress": "Progress",
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "totalOpportunities": "Total Opportunities",
+    "totalFundingGoal": "Total Funding Goal",
+    "totalFundsRaised": "Total Funds Raised",
+    "averageProgress": "Average Progress",
+    "categoryDistribution": "Category Distribution",
+    "fundingStageDistribution": "Funding Stage Distribution",
+    "statusSummary": "Status Summary",
+    "fundsRaised": "Funds Raised",
+    "financialDocumentation": "Financial Documentation",
+    "debtProfile": "Debt Profile"
   },
   "investments": {
     "title": "Investments",
@@ -248,7 +281,9 @@
     "completed": "Completed",
     "inProgress": "In Progress",
     "planned": "Planned",
-    "requireAttention": "Require Attention"
+    "requireAttention": "Require Attention",
+    "recent": "Recent Milestones",
+    "noMilestones": "No milestones to display"
   },
   "serviceProviders": {
     "title": "Service Providers",
@@ -286,9 +321,7 @@
   },
   "agreements": {
     "title": "Agreements",
-    "investmentAgreement":
-
-"Investment Agreement",
+    "investmentAgreement": "Investment Agreement",
     "nda": "Non-Disclosure Agreement",
     "generateAgreement": "Generate Agreement",
     "signAgreement": "Sign Agreement",
@@ -419,6 +452,58 @@
     "funds_released_to_entrepreneur": "Funds Released",
     "completed": "Completed",
     "rejected_by_admin": "Rejected"
+  },
+  "milestoneStatus": {
+    "planned": "Planned",
+    "in_progress": "In Progress",
+    "completed": "Completed",
+    "overdue": "Overdue",
+    "flagged": "Flagged"
+  },
+  "legalStructures": {
+    "soleProprietorship": "Sole Proprietorship",
+    "partnership": "Partnership",
+    "privateLimited": "Private Limited Company",
+    "publicLimited": "Public Limited Company",
+    "cooperative": "Cooperative"
+  },
+  "facilityOwnership": {
+    "owned": "Owned",
+    "leased": "Leased",
+    "shared": "Shared"
+  },
+  "financial": {
+    "currentRevenue": "Current Revenue",
+    "projectedRevenue": "Projected Revenue",
+    "burnRate": "Monthly Burn Rate",
+    "availableDocuments": "Available Financial Documents",
+    "financialStatements": "Financial Statements",
+    "cashFlowProjections": "Cash Flow Projections",
+    "breakEvenAnalysis": "Break-even Analysis"
+  },
+  "debt": {
+    "totalDebt": "Total Debt",
+    "debtToEquityRatio": "Debt-to-Equity Ratio",
+    "creditRating": "Credit Rating"
+  },
+  "documents": {
+    "title": "Documents",
+    "businessDocuments": "Business Documents",
+    "pendingUploads": "{{count}} pending uploads"
+  },
+  "fileUpload": {
+    "dropFiles": "Drop files here",
+    "dragDropOrClick": "Drag and drop files here, or click to select",
+    "selectFiles": "Select Files",
+    "allowedTypes": "Allowed types",
+    "maxSize": "Max size",
+    "uploading": "Uploading Files",
+    "uploadedFiles": "Uploaded Files",
+    "preview": "Preview",
+    "download": "Download",
+    "remove": "Remove",
+    "invalidFileType": "Invalid file type. Allowed types: {{types}}",
+    "fileTooLarge": "File too large. Maximum size: {{size}}MB"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
