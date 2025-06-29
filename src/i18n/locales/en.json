@@ -5,6 +5,7 @@
     "success": "Success",
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving...",
     "edit": "Edit",
     "delete": "Delete",
     "back": "Back",
@@ -30,7 +31,8 @@
     "all": "All",
     "ongoing": "Ongoing",
     "date": "Date",
-    "actions": "Actions"
+    "actions": "Actions",
+    "goHome": "Go Home"
   },
   "auth": {
     "login": "Sign In",
@@ -39,17 +41,25 @@
     "email": "Email Address",
     "password": "Password",
     "confirmPassword": "Confirm Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
     "firstName": "First Name",
     "lastName": "Last Name",
     "phoneNumber": "Phone Number",
     "organization": "Organization",
     "role": "Role",
+    "currentUser": "Current User",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot your password?",
+    "resetPassword": "Reset Password",
+    "setNewPassword": "Set New Password",
+    "updatePassword": "Update Password",
+    "updatingPassword": "Updating password...",
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",
     "signUpHere": "Sign up here",
     "signInHere": "Sign in here",
+    "backToLogin": "Back to Login",
     "invalidCredentials": "Invalid email or password",
     "registrationSuccess": "Registration successful! Please check your email for verification.",
     "loginSuccess": "Welcome back!",
@@ -68,7 +78,30 @@
     "privacyPolicy": "Privacy Policy",
     "passwordRequirements": "Password must be at least 8 characters with uppercase, lowercase, and number",
     "accountSuspended": "Your account has been suspended. Please contact support.",
-    "tooManyAttempts": "Too many login attempts. Please try again later."
+    "tooManyAttempts": "Too many login attempts. Please try again later.",
+    "resetPasswordInstructions": "Enter your email address and we'll send you a link to reset your password.",
+    "setNewPasswordInstructions": "Please enter your new password below.",
+    "sendResetEmail": "Send Reset Email",
+    "sendingResetEmail": "Sending reset email...",
+    "checkYourEmail": "Check Your Email",
+    "passwordResetEmailSent": "We've sent a password reset link to {email}",
+    "passwordResetEmailInstructions": "Please check your email and click the link to reset your password. The link will expire in 24 hours.",
+    "sendAnotherEmail": "Send Another Email",
+    "passwordResetSuccess": "Password Reset Successful",
+    "passwordResetSuccessMessage": "Your password has been successfully reset. You can now log in with your new password.",
+    "redirectingToLogin": "Redirecting to login page...",
+    "invalidResetToken": "Invalid or expired reset token. Please request a new password reset.",
+    "emailVerification": "Email Verification",
+    "verifyingEmail": "Verifying your email...",
+    "emailVerified": "Email Verified",
+    "emailVerifiedMessage": "Your email has been successfully verified. You can now access all features.",
+    "emailVerifiedSuccess": "Email verified successfully! You can now log in.",
+    "emailVerificationFailed": "Email Verification Failed",
+    "invalidVerificationToken": "Invalid or expired verification token.",
+    "resendVerification": "Resend Verification Email",
+    "resendingVerification": "Resending verification email...",
+    "verificationEmailResent": "Verification email has been sent to your inbox.",
+    "resendVerificationFailed": "Failed to resend verification email. Please try again."
   },
   "validation": {
     "emailRequired": "Email address is required",
@@ -93,7 +126,21 @@
     "equityPercentageInvalid": "Equity percentage must be between 0 and 100",
     "fundingStageRequired": "Funding stage is required",
     "minInvestmentRequired": "Minimum investment is required and must be greater than 0",
-    "endDateAfterStartDate": "End date must be after start date"
+    "endDateAfterStartDate": "End date must be after start date",
+    "currentPasswordRequired": "Current password is required",
+    "newPasswordRequired": "New password is required"
+  },
+  "profile": {
+    "title": "Profile",
+    "profileInfo": "Profile Information",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "changingPassword": "Changing password...",
+    "updateSuccess": "Profile updated successfully",
+    "passwordChangeSuccess": "Password changed successfully",
+    "notLoggedIn": "You are not logged in"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -239,7 +286,9 @@
   },
   "agreements": {
     "title": "Agreements",
-    "investmentAgreement": "Investment Agreement",
+    "investmentAgreement":
+
+"Investment Agreement",
     "nda": "Non-Disclosure Agreement",
     "generateAgreement": "Generate Agreement",
     "signAgreement": "Sign Agreement",
@@ -307,21 +356,6 @@
     "opportunityApproved": "Opportunity Approved",
     "agreementSigned": "Agreement Signed",
     "fundsReleased": "Funds Released"
-  },
-  "profile": {
-    "title": "Profile",
-    "editProfile": "Edit Profile",
-    "profilePicture": "Profile Picture",
-    "businessDetails": "Business Details",
-    "bankingDetails": "Banking Details",
-    "dueDiligenceInfo": "Due Diligence Information",
-    "investmentPreferences": "Investment Preferences",
-    "serviceCategories": "Service Categories",
-    "credentials": "Credentials",
-    "addObserver": "Add Observer",
-    "observerEmail": "Observer Email",
-    "observerPermissions": "Observer Permissions",
-    "scopeAllActivities": "Scope All Activities"
   },
   "settings": {
     "title": "Settings",
@@ -395,6 +429,13 @@
     "unauthorized": "Please log in to continue.",
     "sessionExpired": "Your session has expired. Please log in again.",
     "registrationFailed": "Registration failed. Please try again.",
-    "opportunityCreationFailed": "Failed to create opportunity. Please try again."
+    "opportunityCreationFailed": "Failed to create opportunity. Please try again.",
+    "passwordResetFailed": "Failed to send password reset email. Please try again.",
+    "profileUpdateFailed": "Failed to update profile. Please try again.",
+    "passwordChangeFailed": "Failed to change password. Please try again.",
+    "accessDenied": "Access Denied",
+    "authenticationRequired": "Authentication is required to access this page.",
+    "insufficientRole": "You don't have the required role ({roles}) to access this page.",
+    "insufficientPermissions": "You don't have the required permissions ({permissions}) to access this page."
   }
 }

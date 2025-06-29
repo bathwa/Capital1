@@ -195,6 +195,88 @@ export class MockApiService {
     };
   }
 
+  // Password reset methods
+  async requestPasswordReset(email: string) {
+    await this.delay(800);
+    return {
+      success: true,
+      message: 'Password reset email sent successfully'
+    };
+  }
+
+  async confirmPasswordReset(token: string, password: string) {
+    await this.delay(600);
+    return {
+      success: true,
+      message: 'Password reset successfully'
+    };
+  }
+
+  // Email verification methods
+  async verifyEmail(token: string) {
+    await this.delay(500);
+    return {
+      success: true,
+      data: {
+        user: {
+          id: 'mock-user-id',
+          email: 'user@example.com',
+          first_name: 'John',
+          last_name: 'Doe',
+          role: 'ENTREPRENEUR',
+          phone_number: '+263123456789',
+          organization_name: 'Mock Organization',
+          profile_completion_percentage: 75,
+          reliability_score: 85,
+          email_verified: true,
+          status: 'ACTIVE',
+          date_registered: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+      },
+      message: 'Email verified successfully'
+    };
+  }
+
+  async resendEmailVerification(email: string) {
+    await this.delay(400);
+    return {
+      success: true,
+      message: 'Verification email sent successfully'
+    };
+  }
+
+  // Password change method
+  async changePassword(currentPassword: string, newPassword: string) {
+    await this.delay(600);
+    return {
+      success: true,
+      message: 'Password changed successfully'
+    };
+  }
+
+  // Token refresh method
+  async refreshToken() {
+    await this.delay(300);
+    return {
+      success: true,
+      data: {
+        token: 'mock-refreshed-token-' + Date.now()
+      },
+      message: 'Token refreshed successfully'
+    };
+  }
+
+  // Update last login
+  async updateLastLogin() {
+    await this.delay(200);
+    return {
+      success: true,
+      message: 'Last login updated'
+    };
+  }
+
   async healthCheck() {
     await this.delay(100);
     return {

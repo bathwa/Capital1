@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { User } from '../types';
-import apiService from '../services/api';
+import { authService } from '../services/authService';
 
 interface AuthState {
   user: User | null;
@@ -11,7 +11,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   register: (userData: any) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
@@ -85,49 +85,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const token = localStorage.getItem('abathwa_token');
-      
-      if (token) {
-        try {
-          // Verify token is still valid by fetching current user from production API
-          const currentUser = await apiService.getCurrentUser();
-          dispatch({ type: 'SET_USER', payload: { user: currentUser, token } });
-        } catch (error: any) {
-          console.error('Token validation failed:', error);
+      dispatch({ type: 'SET_LOADING', payload: true });
+
+      try {
+        // Check if user is already authenticated
+        if (authService.isAuthenticated()) {
+          const user = authService.getUser();
+          const token = authService.getToken();
           
-          // Clear invalid token and user data
-          localStorage.removeItem('abathwa_token');
-          localStorage.removeItem('abathwa_user');
-          
-          // Don't show error for expired tokens during initialization
-          dispatch({ type: 'SET_LOADING', payload: false });
+          if (user && token) {
+            dispatch({ type: 'SET_USER', payload: { user, token } });
+          } else {
+            // Clear invalid session
+            await authService.logout();
+            dispatch({ type: 'CLEAR_USER' });
+          }
+        } else {
+          dispatch({ type: 'CLEAR_USER' });
         }
-      } else {
+      } catch (error: any) {
+        console.error('Auth initialization failed:', error);
+        await authService.logout();
+        dispatch({ type: 'CLEAR_USER' });
+      } finally {
         dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
     initializeAuth();
+
+    // Listen for auth events
+    const handleLogout = () => {
+      dispatch({ type: 'CLEAR_USER' });
+    };
+
+    const handleSessionTimeout = () => {
+      dispatch({ type: 'SET_ERROR', payload: 'Your session has expired. Please log in again.' });
+      dispatch({ type: 'CLEAR_USER' });
+    };
+
+    window.addEventListener('auth:logout', handleLogout);
+    window.addEventListener('auth:session-timeout', handleSessionTimeout);
+
+    return () => {
+      window.removeEventListener('auth:logout', handleLogout);
+      window.removeEventListener('auth:session-timeout', handleSessionTimeout);
+    };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, rememberMe = false) => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'CLEAR_ERROR' });
     
     try {
-      // Call production login API
-      const response = await apiService.login(email, password);
+      const response = await authService.login({ email, password, rememberMe });
       
-      if (!response.success) {
+      if (response.success && response.data) {
+        const { user, token } = response.data;
+        dispatch({ type: 'SET_USER', payload: { user, token } });
+      } else {
         throw new Error(response.message || 'Login failed');
       }
-      
-      const { token, user } = response.data;
-      
-      // Store token and user data
-      localStorage.setItem('abathwa_token', token);
-      localStorage.setItem('abathwa_user', JSON.stringify(user));
-      
-      dispatch({ type: 'SET_USER', payload: { user, token } });
     } catch (error: any) {
       console.error('Login error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message || 'Login failed' });
@@ -137,16 +155,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Call production logout API to invalidate token on server
-      await apiService.logout();
+      await authService.logout();
     } catch (error) {
-      console.error('Logout API call failed:', error);
-      // Continue with local logout even if API call fails
+      console.error('Logout error:', error);
     } finally {
-      // Clear local storage and state
-      localStorage.removeItem('abathwa_token');
-      localStorage.removeItem('abathwa_user');
-      localStorage.removeItem('abathwa_remember_email');
       dispatch({ type: 'CLEAR_USER' });
     }
   };
@@ -154,6 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (userData: {
     email: string;
     password: string;
+    confirmPassword: string;
     first_name: string;
     last_name: string;
     phone_number: string;
@@ -161,39 +174,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     organization_name?: string;
   }) => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'CLEAR_ERROR' });
     
     try {
-      // Call production registration API
-      const response = await apiService.register(userData);
+      const response = await authService.register(userData);
       
       if (!response.success) {
         throw new Error(response.message || 'Registration failed');
       }
-      
-      dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error: any) {
       console.error('Registration error:', error);
       dispatch({ type: 'SET_ERROR', payload: error.message || 'Registration failed' });
       throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
     }
   };
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      // Call production profile update API
-      const response = await apiService.updateProfile(updates);
+      const response = await authService.updateProfile(updates);
       
-      if (!response.success) {
+      if (response.success && response.data) {
+        dispatch({ type: 'UPDATE_USER', payload: response.data });
+      } else {
         throw new Error(response.message || 'Profile update failed');
-      }
-      
-      const updatedUser = response.data;
-      dispatch({ type: 'UPDATE_USER', payload: updatedUser });
-      
-      // Update local storage
-      if (state.user) {
-        const newUserData = { ...state.user, ...updatedUser };
-        localStorage.setItem('abathwa_user', JSON.stringify(newUserData));
       }
     } catch (error: any) {
       console.error('Profile update error:', error);

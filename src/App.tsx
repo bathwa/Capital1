@@ -4,10 +4,15 @@ import { AuthProvider } from './context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import OfflineIndicator from './components/common/OfflineIndicator';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
 import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
+import PasswordResetRequest from './components/auth/PasswordResetRequest';
+import PasswordResetConfirm from './components/auth/PasswordResetConfirm';
+import EmailVerification from './components/auth/EmailVerification';
+import UnauthorizedPage from './components/auth/UnauthorizedPage';
+import UserProfile from './components/auth/UserProfile';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import DashboardOverview from './components/dashboard/DashboardOverview';
@@ -75,6 +80,10 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/signup" element={<SignupForm />} />
+            <Route path="/forgot-password" element={<PasswordResetRequest />} />
+            <Route path="/reset-password" element={<PasswordResetConfirm />} />
+            <Route path="/verify-email" element={<EmailVerification />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
             {/* Protected Routes */}
             <Route
@@ -83,6 +92,18 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <DashboardOverview />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Profile Route */}
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <UserProfile />
                   </Layout>
                 </ProtectedRoute>
               }

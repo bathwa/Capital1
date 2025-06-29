@@ -230,6 +230,77 @@ class ApiService {
     return response.data;
   }
 
+  // Password reset endpoints
+  async requestPasswordReset(email: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.requestPasswordReset(email);
+    }
+    
+    const response = await this.api.post('/api/v1/auth/password-reset', { email });
+    return response.data;
+  }
+
+  async confirmPasswordReset(token: string, password: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.confirmPasswordReset(token, password);
+    }
+    
+    const response = await this.api.post('/api/v1/auth/password-reset/confirm', { token, password });
+    return response.data;
+  }
+
+  // Email verification endpoints
+  async verifyEmail(token: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.verifyEmail(token);
+    }
+    
+    const response = await this.api.post('/api/v1/auth/verify-email', { token });
+    return response.data;
+  }
+
+  async resendEmailVerification(email: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.resendEmailVerification(email);
+    }
+    
+    const response = await this.api.post('/api/v1/auth/resend-verification', { email });
+    return response.data;
+  }
+
+  // Password change endpoint
+  async changePassword(currentPassword: string, newPassword: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.changePassword(currentPassword, newPassword);
+    }
+    
+    const response = await this.api.post('/api/v1/auth/change-password', { 
+      current_password: currentPassword, 
+      new_password: newPassword 
+    });
+    return response.data;
+  }
+
+  // Token refresh endpoint
+  async refreshToken() {
+    if (USE_MOCK_API) {
+      return await mockApiService.refreshToken();
+    }
+    
+    const response = await this.api.post('/api/v1/auth/refresh');
+    return response.data;
+  }
+
+  // Update last login
+  async updateLastLogin() {
+    if (USE_MOCK_API) {
+      return await mockApiService.updateLastLogin();
+    }
+    
+    const response = await this.api.post('/api/v1/auth/update-last-login');
+    return response.data;
+  }
+
   // User endpoints
   async getCurrentUser() {
     if (USE_SUPABASE && this.supabaseAvailable) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, Menu, User, LogOut, Settings } from 'lucide-react';
+import { Bell, Menu, User, LogOut, Settings, UserCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import LanguageToggle from '../common/LanguageToggle';
 import ThemeToggle from '../common/ThemeToggle';
 
@@ -42,9 +43,11 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                Abathwa Capital
-              </h1>
+              <Link to="/dashboard" className="flex items-center">
+                <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                  Abathwa Capital
+                </h1>
+              </Link>
               <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                 {t('common.tagline')}
               </p>
@@ -106,10 +109,22 @@ const Navbar: React.FC = () => {
                       </div>
                       
                       <div className="p-2">
-                        <button className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <Link
+                          to="/profile"
+                          onClick={() => setShowDropdown(false)}
+                          className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        >
+                          <UserCircle className="h-4 w-4" />
+                          <span>{t('profile.title')}</span>
+                        </Link>
+                        <Link
+                          to="/settings"
+                          onClick={() => setShowDropdown(false)}
+                          className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                        >
                           <Settings className="h-4 w-4" />
                           <span>{t('settings.title')}</span>
-                        </button>
+                        </Link>
                         <button
                           onClick={handleLogout}
                           className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-error-600 dark:text-error-400"
@@ -178,10 +193,21 @@ const Navbar: React.FC = () => {
                   </span>
                 </button>
                 
-                <button className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <Link
+                  to="/profile"
+                  className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                >
+                  <UserCircle className="h-4 w-4" />
+                  <span>{t('profile.title')}</span>
+                </Link>
+                
+                <Link
+                  to="/settings"
+                  className="flex items-center space-x-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
+                >
                   <Settings className="h-4 w-4" />
                   <span>{t('settings.title')}</span>
-                </button>
+                </Link>
                 
                 <button
                   onClick={handleLogout}
