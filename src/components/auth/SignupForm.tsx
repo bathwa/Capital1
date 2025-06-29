@@ -119,6 +119,7 @@ const SignupForm: React.FC = () => {
       const userData = {
         email: formData.email,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone_number: formData.phoneNumber,

@@ -79,7 +79,7 @@ const LoginForm: React.FC = () => {
     setSuccessMessage('');
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email, formData.password, formData.rememberMe);
       
       // Handle remember me functionality
       if (formData.rememberMe) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -9,7 +9,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Eye
+  Eye,
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import LoadingSpinner from '../common/LoadingSpinner';
 import apiService from '../../services/api';
@@ -31,53 +33,92 @@ interface Activity {
   is_read: boolean;
 }
 
+interface DashboardData {
+  stats: Record<string, any>;
+  activities: Activity[];
+  lastUpdated: number;
+}
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const REFRESH_INTERVAL = 30 * 1000; // 30 seconds
+
 const DashboardOverview: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [stats, setStats] = useState<StatCard[]>([]);
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+  
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!user) return;
+  // Memoized stats calculation to prevent unnecessary recalculations
+  const stats = useMemo(() => {
+    if (!dashboardData || !user) return [];
 
-      try {
+    return getStatsForRole(user.role, dashboardData.stats);
+  }, [dashboardData, user]);
+
+  // Optimized data fetching with caching
+  const fetchDashboardData = async (forceRefresh = false) => {
+    try {
+      // Check cache first
+      if (!forceRefresh && dashboardData && Date.now() - dashboardData.lastUpdated < CACHE_DURATION) {
+        setLoading(false);
+        return;
+      }
+
+      if (forceRefresh) {
+        setRefreshing(true);
+      } else {
         setLoading(true);
-        setError(null);
-        
-        // Fetch dashboard data from production API
-        const [dashboardData, notifications] = await Promise.all([
-          apiService.getDashboardData(),
-          apiService.getNotifications({ limit: 5 })
-        ]);
-        
-        // Set stats based on user role and real data
-        const roleStats = getStatsForRole(user.role, dashboardData);
-        setStats(roleStats);
+      }
 
-        // Set recent activity from real notifications
-        const activities = notifications.data?.map((notif: any) => ({
+      // Fetch data from real backend
+      const [statsResponse, notificationsResponse] = await Promise.all([
+        apiService.getDashboardData(),
+        apiService.getNotifications({ limit: 5 })
+      ]);
+
+      const newData: DashboardData = {
+        stats: statsResponse.data || {},
+        activities: (notificationsResponse.data || []).map((notif: any) => ({
           id: notif.id,
           type: notif.type,
           message: notif.message,
           created_at: notif.created_at,
           is_read: notif.is_read
-        })) || [];
-        
-        setRecentActivity(activities);
+        })),
+        lastUpdated: Date.now()
+      };
 
-      } catch (error: any) {
-        console.error('Failed to fetch dashboard data:', error);
-        setError(error.response?.data?.message || 'Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+      setDashboardData(newData);
+      setError(null);
+    } catch (error: any) {
+      console.error('Failed to fetch dashboard data:', error);
+      setError(error.response?.data?.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Initial data load
+  useEffect(() => {
+    if (user?.id) {
+      fetchDashboardData();
+    }
+  }, [user?.id]);
+
+  // Auto-refresh data periodically (only when page is visible)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible' && user?.id) {
+        fetchDashboardData(true);
       }
-    };
+    }, REFRESH_INTERVAL);
 
-    fetchDashboardData();
-  }, [user]);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const getStatsForRole = (role: string, data: any): StatCard[] => {
     switch (role) {
@@ -85,7 +126,7 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('dashboard.totalUsers'),
-            value: data.total_users?.toString() || '0',
+            value: (data.total_users || 0).toString(),
             icon: <Users className="h-6 w-6 text-primary-600" />,
             change: data.user_growth_percentage ? `+${data.user_growth_percentage}%` : undefined,
             changeType: 'positive',
@@ -93,13 +134,13 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('dashboard.pendingApprovals'),
-            value: data.pending_approvals?.toString() || '0',
+            value: (data.pending_approvals || 0).toString(),
             icon: <Clock className="h-6 w-6 text-warning-600" />,
             description: t('opportunities.pendingReview')
           },
           {
             title: t('dashboard.activeInvestments'),
-            value: `$${data.total_active_investments?.toLocaleString() || '0'}`,
+            value: `$${(data.total_active_investments || 0).toLocaleString()}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
             change: data.investment_growth_percentage ? `+${data.investment_growth_percentage}%` : undefined,
             changeType: 'positive',
@@ -107,7 +148,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('dashboard.platformRevenue'),
-            value: `$${data.platform_revenue?.toLocaleString() || '0'}`,
+            value: `$${(data.platform_revenue || 0).toLocaleString()}`,
             icon: <TrendingUp className="h-6 w-6 text-accent-600" />,
             change: data.revenue_growth_percentage ? `+${data.revenue_growth_percentage}%` : undefined,
             changeType: 'positive',
@@ -119,13 +160,13 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('opportunities.activeOpportunities'),
-            value: data.active_opportunities?.toString() || '0',
+            value: (data.active_opportunities || 0).toString(),
             icon: <TrendingUp className="h-6 w-6 text-primary-600" />,
             description: t('opportunities.seekingFunding')
           },
           {
             title: t('dashboard.totalFunded'),
-            value: `$${data.total_funded?.toLocaleString() || '0'}`,
+            value: `$${(data.total_funded || 0).toLocaleString()}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
             change: data.funding_growth_percentage ? `+${data.funding_growth_percentage}%` : undefined,
             changeType: 'positive',
@@ -133,7 +174,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('dashboard.reliabilityScore'),
-            value: `${data.reliability_score || '0'}%`,
+            value: `${data.reliability_score || 0}%`,
             icon: <CheckCircle className="h-6 w-6 text-success-600" />,
             change: data.reliability_change ? `${data.reliability_change > 0 ? '+' : ''}${data.reliability_change}%` : undefined,
             changeType: data.reliability_change > 0 ? 'positive' : 'negative',
@@ -141,7 +182,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('milestones.overdue'),
-            value: data.overdue_milestones?.toString() || '0',
+            value: (data.overdue_milestones || 0).toString(),
             icon: <AlertTriangle className="h-6 w-6 text-error-600" />,
             description: t('milestones.requireAttention')
           }
@@ -151,19 +192,19 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('investments.activeInvestments'),
-            value: data.active_investments?.toString() || '0',
+            value: (data.active_investments || 0).toString(),
             icon: <TrendingUp className="h-6 w-6 text-primary-600" />,
             description: t('investments.currentlyInvested')
           },
           {
             title: t('investments.totalInvested'),
-            value: `$${data.total_invested?.toLocaleString() || '0'}`,
+            value: `$${(data.total_invested || 0).toLocaleString()}`,
             icon: <DollarSign className="h-6 w-6 text-primary-600" />,
             description: t('investments.lifetimeAmount')
           },
           {
             title: t('dashboard.portfolioROI'),
-            value: `${data.portfolio_roi > 0 ? '+' : ''}${data.portfolio_roi || '0'}%`,
+            value: `${data.portfolio_roi > 0 ? '+' : ''}${data.portfolio_roi || 0}%`,
             icon: <TrendingUp className="h-6 w-6 text-success-600" />,
             change: data.roi_change ? `${data.roi_change > 0 ? '+' : ''}${data.roi_change}%` : undefined,
             changeType: data.roi_change > 0 ? 'positive' : 'negative',
@@ -171,7 +212,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('pools.memberships'),
-            value: data.pool_memberships?.toString() || '0',
+            value: (data.pool_memberships || 0).toString(),
             icon: <Users className="h-6 w-6 text-accent-600" />,
             description: t('pools.poolsJoined')
           }
@@ -181,13 +222,13 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('serviceProviders.activeRequests'),
-            value: data.active_requests?.toString() || '0',
+            value: (data.active_requests || 0).toString(),
             icon: <FileText className="h-6 w-6 text-primary-600" />,
             description: t('serviceProviders.currentEngagements')
           },
           {
             title: t('serviceProviders.completedServices'),
-            value: data.completed_services?.toString() || '0',
+            value: (data.completed_services || 0).toString(),
             icon: <CheckCircle className="h-6 w-6 text-success-600" />,
             change: data.services_growth ? `+${data.services_growth}` : undefined,
             changeType: 'positive',
@@ -195,7 +236,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('dashboard.totalEarnings'),
-            value: `$${data.total_earnings?.toLocaleString() || '0'}`,
+            value: `$${(data.total_earnings || 0).toLocaleString()}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
             change: data.earnings_growth_percentage ? `+${data.earnings_growth_percentage}%` : undefined,
             changeType: 'positive',
@@ -203,7 +244,7 @@ const DashboardOverview: React.FC = () => {
           },
           {
             title: t('dashboard.rating'),
-            value: `${data.average_rating || '0'}/5`,
+            value: `${data.average_rating || 0}/5`,
             icon: <CheckCircle className="h-6 w-6 text-accent-600" />,
             description: t('serviceProviders.clientSatisfaction')
           }
@@ -213,25 +254,25 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('observer.observedEntities'),
-            value: data.observed_entities?.toString() || '0',
+            value: (data.observed_entities || 0).toString(),
             icon: <Eye className="h-6 w-6 text-primary-600" />,
             description: t('observer.entitiesMonitored')
           },
           {
             title: t('observer.permissions'),
-            value: data.access_permissions?.toString() || '0',
+            value: (data.access_permissions || 0).toString(),
             icon: <Users className="h-6 w-6 text-success-600" />,
             description: t('observer.accessLevels')
           },
           {
             title: t('dashboard.recentReports'),
-            value: data.recent_reports?.toString() || '0',
+            value: (data.recent_reports || 0).toString(),
             icon: <FileText className="h-6 w-6 text-accent-600" />,
             description: t('dashboard.newReportsAvailable')
           },
           {
             title: t('dashboard.alerts'),
-            value: data.alerts?.toString() || '0',
+            value: (data.alerts || 0).toString(),
             icon: <AlertTriangle className="h-6 w-6 text-warning-600" />,
             description: t('dashboard.performanceAlerts')
           }
@@ -267,7 +308,7 @@ const DashboardOverview: React.FC = () => {
 
   if (!user) return null;
 
-  if (loading) {
+  if (loading && !dashboardData) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -275,12 +316,21 @@ const DashboardOverview: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !dashboardData) {
     return (
       <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 rounded-lg p-6">
-        <div className="flex items-center">
-          <AlertTriangle className="h-5 w-5 text-error-600 mr-2" />
-          <span className="text-error-800 dark:text-error-200">{error}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-error-600 mr-2" />
+            <span className="text-error-800 dark:text-error-200">{error}</span>
+          </div>
+          <button
+            onClick={() => fetchDashboardData(true)}
+            className="flex items-center px-3 py-1 bg-error-600 text-white rounded hover:bg-error-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -289,7 +339,7 @@ const DashboardOverview: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -299,21 +349,35 @@ const DashboardOverview: React.FC = () => {
               {t('dashboard.roleDescription', { role: user.role.toLowerCase().replace('_', ' ') })}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              {t('dashboard.profileCompletion')}
-            </div>
-            <div className="flex items-center mt-1">
-              <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-3">
-                <div 
-                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${user.profile_completion_percentage}%` }}
-                ></div>
+          <div className="flex items-center space-x-4">
+            <div className="text-right">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {t('dashboard.profileCompletion')}
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {user.profile_completion_percentage}%
-              </span>
+              <div className="flex items-center mt-1">
+                <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-3">
+                  <div 
+                    className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${user.profile_completion_percentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {user.profile_completion_percentage}%
+                </span>
+              </div>
             </div>
+            <button
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}
+              className="flex items-center px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
+            >
+              {refreshing ? (
+                <LoadingSpinner size="sm" className="mr-2" />
+              ) : (
+                <BarChart3 className="h-4 w-4 mr-2" />
+              )}
+              {refreshing ? t('common.refreshing') : t('common.refresh')}
+            </button>
           </div>
         </div>
       </div>
@@ -321,7 +385,7 @@ const DashboardOverview: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 hover:shadow-md transition-shadow">
+          <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.title}</p>
@@ -348,7 +412,7 @@ const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {t('dashboard.recentActivity')}
@@ -356,8 +420,8 @@ const DashboardOverview: React.FC = () => {
         </div>
         <div className="p-6">
           <div className="space-y-4">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity) => (
+            {dashboardData?.activities.length ? (
+              dashboardData.activities.map((activity) => (
                 <div key={activity.id} className="flex items-start space-x-3">
                   <div className="flex-shrink-0 mt-0.5">
                     {getActivityIcon(activity.type)}
@@ -382,13 +446,13 @@ const DashboardOverview: React.FC = () => {
             )}
           </div>
           
-          {recentActivity.length > 0 && (
+          {dashboardData?.activities.length ? (
             <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
               <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium">
                 {t('dashboard.viewAll')} →
               </button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

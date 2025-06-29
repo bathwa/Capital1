@@ -75,7 +75,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 const initialState: AuthState = {
   user: null,
   token: null,
-  isLoading: true,
+  isLoading: false, // Start with false to prevent initial loading flash
   isAuthenticated: false,
   error: null,
 };
@@ -85,31 +85,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initializeAuth = async () => {
-      dispatch({ type: 'SET_LOADING', payload: true });
-
-      try {
-        // Check if user is already authenticated
-        if (authService.isAuthenticated()) {
-          const user = authService.getUser();
-          const token = authService.getToken();
-          
-          if (user && token) {
-            dispatch({ type: 'SET_USER', payload: { user, token } });
-          } else {
-            // Clear invalid session
-            await authService.logout();
-            dispatch({ type: 'CLEAR_USER' });
-          }
-        } else {
-          dispatch({ type: 'CLEAR_USER' });
+      // Quick check for existing session without loading state
+      if (authService.isAuthenticated()) {
+        const user = authService.getUser();
+        const token = authService.getToken();
+        
+        if (user && token) {
+          dispatch({ type: 'SET_USER', payload: { user, token } });
+          return;
         }
-      } catch (error: any) {
-        console.error('Auth initialization failed:', error);
-        await authService.logout();
-        dispatch({ type: 'CLEAR_USER' });
-      } finally {
-        dispatch({ type: 'SET_LOADING', payload: false });
       }
+      
+      // Clear any invalid session data
+      await authService.logout();
+      dispatch({ type: 'CLEAR_USER' });
     };
 
     initializeAuth();
