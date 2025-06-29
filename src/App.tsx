@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import ProtectedRoute from './components/ProtectedRoute';
+import LandingPage from './pages/LandingPage';
 import LoginForm from './components/auth/LoginForm';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
@@ -42,7 +43,11 @@ function App() {
         <Router>
           <OfflineIndicator />
           <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginForm />} />
+            
+            {/* Protected Routes */}
             <Route
               path="/dashboard"
               element={
@@ -121,7 +126,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Router>
       </AuthProvider>
