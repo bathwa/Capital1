@@ -21,7 +21,12 @@
     "reject": "Yala",
     "approve": "Vuma",
     "accept": "Yamukela",
-    "decline": "Yenqaba"
+    "decline": "Yenqaba",
+    "tagline": "Ukuxhumanisa osomabhizinisi baseZimbabwe labatyali-mali ukuze kukhule umnotho ngokubambisana",
+    "offline": "Awukho ku-intanethi",
+    "pending": "imisebenzi elindayo",
+    "optional": "ayiphoqelekanga",
+    "and": "kanye"
   },
   "auth": {
     "login": "Ngena",
@@ -42,21 +47,69 @@
     "signUpHere": "Zibhalise lapha",
     "signInHere": "Ngena lapha",
     "invalidCredentials": "I-imeyili kumbe iphasiwedi ayilunganga",
-    "registrationSuccess": "Ukuzibhalisa kuphumelele! Hlola i-imeyili yakho.",
+    "registrationSuccess": "Ukuzibhalisa kuphumelele! Hlola i-imeyili yakho ukuze uqinisekise.",
     "loginSuccess": "Siyakwamukela!",
-    "logoutSuccess": "Usuphumile."
+    "logoutSuccess": "Usuphumile.",
+    "emailPlaceholder": "Faka i-imeyili yakho",
+    "passwordPlaceholder": "Faka iphasiwedi yakho",
+    "firstNamePlaceholder": "Faka ibizo lakho lokuqala",
+    "lastNamePlaceholder": "Faka isibongo sakho",
+    "confirmPasswordPlaceholder": "Qinisekisa iphasiwedi yakho",
+    "organizationPlaceholder": "Faka ibizo lenhlangano yakho",
+    "signingIn": "Kuyangena...",
+    "creatingAccount": "Kudalwa i-akhawunti...",
+    "selectRole": "Khetha indima yakho",
+    "acceptTerms": "Ngiyayamukela",
+    "termsOfService": "Imigomo Yenkonzo",
+    "privacyPolicy": "Inqubomgomo Yobumfihlo",
+    "passwordRequirements": "Iphasiwedi kufanele ibe nobuncinane obamagama ayi-8 enamagama amakhulu, amancane, nenombolo",
+    "accountSuspended": "I-akhawunti yakho imisiwe. Xhumana nenkxaso.",
+    "tooManyAttempts": "Imizamo eminingi yokungena. Zama futhi kamuva."
+  },
+  "validation": {
+    "emailRequired": "I-imeyili iyadingeka",
+    "emailInvalid": "Faka i-imeyili efanelekayo",
+    "passwordRequired": "Iphasiwedi iyadingeka",
+    "passwordMinLength": "Iphasiwedi kufanele ibe nobuncinane obamagama ayi-8",
+    "passwordComplexity": "Iphasiwedi kufanele ibe namagama amakhulu, amancane, nenombolo",
+    "confirmPasswordRequired": "Qinisekisa iphasiwedi yakho",
+    "passwordsDoNotMatch": "Amaphasiwedi awafani",
+    "firstNameRequired": "Ibizo lokuqala liyadingeka",
+    "lastNameRequired": "Isibongo siyadingeka",
+    "phoneRequired": "Inombolo yocingo iyadingeka",
+    "phoneInvalid": "Faka inombolo yocingo efanelekayo",
+    "roleRequired": "Khetha indima",
+    "termsRequired": "Kufanele wamukele imigomo nemibandela"
   },
   "dashboard": {
+    "title": "Ideshibhodi",
     "welcome": "Siyakwamukela",
     "overview": "Isifinyezo",
     "recentActivity": "Imisebenzi Yamuva",
-    "viewAll": "Bona konke",
+    "viewAll": "Bona konke okwenzekayo",
     "profileCompletion": "Ukuqedwa Kwephrofayili",
     "reliabilityScore": "Amaphuzu Okuthembeka",
     "totalInvestments": "Utyalo-mali Olupheleleyo",
     "activeOpportunities": "Amathuba Asebenzayo",
     "pendingApprovals": "Ukuvunywa Okulindayo",
-    "platformRevenue": "Imali Engenayo Yeplatifomi"
+    "platformRevenue": "Imali Engenayo Yeplatifomi",
+    "totalUsers": "Abasebenzisi Bonke",
+    "activeUsers": "Abasebenzisi Abasebenzayo",
+    "totalFunded": "Imali Epheleleyo Enikelelwe",
+    "lifetimeFunding": "Imali Yobomi Bonke",
+    "milestoneCompletion": "Isilinganiso Sokuqeda Amaphawu",
+    "portfolioROI": "I-ROI Yephothifoliyo",
+    "averageReturn": "Ukubuyela Okulinganiselayo",
+    "totalEarnings": "Imali Epheleleyo Etholiwe",
+    "rating": "Isilinganiso",
+    "recentReports": "Imibiko Yamuva",
+    "newReportsAvailable": "Imibiko Emisha Iyatholakala",
+    "alerts": "Izexwayiso",
+    "performanceAlerts": "Izexwayiso Zokusebenza",
+    "roleDescription": "Ungene njengo{{role}}",
+    "fromLastMonth": "kusukela enyangeni edlule",
+    "monthlyFees": "Imali Yenyanga",
+    "noRecentActivity": "Akukho okwenzekayo muva nje"
   },
   "opportunities": {
     "title": "Amathuba",
@@ -77,7 +130,10 @@
     "publish": "Shicilela",
     "saveDraft": "Gcina Njengedrafti",
     "riskAssessment": "Ukuhlolwa Kwengozi",
-    "dueDiligence": "Ukuphenywa Okufanele"
+    "dueDiligence": "Ukuphenywa Okufanele",
+    "activeOpportunities": "Amathuba Asebenzayo",
+    "seekingFunding": "Kudingeka Imali",
+    "pendingReview": "Kulindwe Ukubuyekezwa"
   },
   "investments": {
     "title": "Utyalo-mali",
@@ -89,7 +145,12 @@
     "proofOfPayment": "Ubufakazi Bokukhokha",
     "transactionReference": "Inkomba Yokuthengiselana",
     "paymentStatus": "Isimo Sokukhokha",
-    "investmentStatus": "Isimo Sotyalo-mali"
+    "investmentStatus": "Isimo Sotyalo-mali",
+    "activeInvestments": "Utyalo-mali Olusebenzayo",
+    "currentlyInvested": "Okutyalwe Manje",
+    "totalInvested": "Konke Okutyaliwe",
+    "lifetimeAmount": "Imali Yobomi Bonke",
+    "totalActive": "Konke Okusebenzayo"
   },
   "milestones": {
     "title": "Amaphawu Okufinyelela",
@@ -102,7 +163,8 @@
     "overdue": "Kudlule isikhathi",
     "completed": "Kuqediwe",
     "inProgress": "Kuyaqhubeka",
-    "planned": "Kuhleliwe"
+    "planned": "Kuhleliwe",
+    "requireAttention": "Kudinga Ukunakwa"
   },
   "serviceProviders": {
     "title": "Abahlinzeki Benkonzo",
@@ -115,7 +177,13 @@
     "acceptRequest": "Yamukela Isicelo",
     "declineRequest": "Yenqaba Isicelo",
     "completeService": "Qeda Inkonzo",
-    "uploadReport": "Layisha Umbiko"
+    "uploadReport": "Layisha Umbiko",
+    "activeRequests": "Izicelo Ezisebenzayo",
+    "currentEngagements": "Ukubandakanyeka Kwamanje",
+    "completedServices": "Inkonzo Eziqediwe",
+    "successfullyDelivered": "Zilethwe Ngempumelelo",
+    "platformEarnings": "Imali Etholiwe Eplatifomini",
+    "clientSatisfaction": "Ukwaneliseka Kwamakhasimende"
   },
   "pools": {
     "title": "Amaqembu Otyalo-mali",
@@ -128,7 +196,9 @@
     "members": "Amalungu",
     "leaderPerformance": "Ukusebenza Komholi",
     "rateLeader": "Linganisa Umholi",
-    "meetingMinutes": "Imizuzu Yomhlangano"
+    "meetingMinutes": "Imizuzu Yomhlangano",
+    "memberships": "Ubulungu Bamaqembu",
+    "poolsJoined": "Amaqembu Ajoyiniwe"
   },
   "agreements": {
     "title": "Izivumelwano",
@@ -169,7 +239,9 @@
     "viewMeetingMinutes": "Bona Imizuzu Yomhlangano",
     "viewMemberList": "Bona Uhlu Lwamalungu",
     "permissionDenied": "Imvume Yenqatshelwe",
-    "readOnlyAccess": "Ukufinyelela Kokufunda Kuphela"
+    "readOnlyAccess": "Ukufinyelela Kokufunda Kuphela",
+    "entitiesMonitored": "Izinto Eziqashiwe",
+    "accessLevels": "Amazinga Okufinyelela"
   },
   "settlement": {
     "title": "Amacebo Okuxazulula",
@@ -240,6 +312,14 @@
     "supportEmail": "I-imeyili Yenkxaso",
     "supportWhatsApp": "I-WhatsApp Yenkxaso"
   },
+  "roles": {
+    "admin": "Umphathi",
+    "entrepreneur": "Usomabhizinisi",
+    "investor": "Umtyali-mali",
+    "serviceProvider": "Umhlinzeki Wenkonzo",
+    "observer": "Umbukeli",
+    "user": "Umsebenzisi"
+  },
   "errors": {
     "networkError": "Iphutha lenethiwekhi. Hlola ukuxhumana kwakho.",
     "serverError": "Iphutha leseva. Zama futhi kamuva.",
@@ -247,6 +327,7 @@
     "permissionDenied": "Awunamvume yokwenza lesi senzo.",
     "notFound": "Into ecelwayo ayitholakali.",
     "unauthorized": "Ngena ukuze uqhubeke.",
-    "sessionExpired": "Isikhathi sakho siphelile. Ngena futhi."
+    "sessionExpired": "Isikhathi sakho siphelile. Ngena futhi.",
+    "registrationFailed": "Ukuzibhalisa kuhlulekile. Zama futhi."
   }
 }

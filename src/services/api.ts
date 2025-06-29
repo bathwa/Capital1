@@ -1,8 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import { mockApiService } from './mockApi';
 
 // Production API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.abathwa.com';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000');
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true' || import.meta.env.DEV;
 
 class ApiService {
   private api: AxiosInstance;
@@ -58,6 +60,12 @@ class ApiService {
       async (error) => {
         const originalRequest = error.config;
 
+        // If using mock API and network error occurs, fall back to mock
+        if (USE_MOCK_API && !error.response) {
+          console.warn('Network error detected, using mock API fallback');
+          return this.handleMockFallback(originalRequest);
+        }
+
         // Handle 401 Unauthorized - token expired or invalid
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
@@ -100,8 +108,49 @@ class ApiService {
     );
   }
 
+  private async handleMockFallback(originalRequest: any) {
+    const method = originalRequest.method?.toLowerCase();
+    const url = originalRequest.url;
+    
+    try {
+      if (url.includes('/auth/login') && method === 'post') {
+        const { email, password } = originalRequest.data;
+        return { data: await mockApiService.login(email, password) };
+      }
+      
+      if (url.includes('/auth/register') && method === 'post') {
+        return { data: await mockApiService.register(originalRequest.data) };
+      }
+      
+      if (url.includes('/users/me/dashboard') && method === 'get') {
+        return { data: await mockApiService.getDashboardData() };
+      }
+      
+      if (url.includes('/users/me') && method === 'get') {
+        return { data: await mockApiService.getCurrentUser() };
+      }
+      
+      if (url.includes('/notifications/me') && method === 'get') {
+        return { data: await mockApiService.getNotifications() };
+      }
+      
+      if (url.includes('/auth/logout') && method === 'post') {
+        return { data: await mockApiService.logout() };
+      }
+      
+      // Default fallback
+      return { data: { success: true, message: 'Mock API fallback' } };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Auth endpoints
   async login(email: string, password: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.login(email, password);
+    }
+    
     const response = await this.api.post('/api/v1/auth/login', { 
       email: email.toLowerCase().trim(), 
       password 
@@ -118,6 +167,10 @@ class ApiService {
     role: string;
     organization_name?: string;
   }) {
+    if (USE_MOCK_API) {
+      return await mockApiService.register(userData);
+    }
+    
     const response = await this.api.post('/api/v1/auth/register', {
       ...userData,
       email: userData.email.toLowerCase().trim(),
@@ -126,57 +179,39 @@ class ApiService {
     return response.data;
   }
 
-  async confirmEmail(token: string) {
-    const response = await this.api.post('/api/v1/auth/confirm-email', { token });
-    return response.data;
-  }
-
-  async forgotPassword(email: string) {
-    const response = await this.api.post('/api/v1/auth/forgot-password', { 
-      email: email.toLowerCase().trim() 
-    });
-    return response.data;
-  }
-
-  async resetPassword(token: string, newPassword: string) {
-    const response = await this.api.post('/api/v1/auth/reset-password', { 
-      token, 
-      new_password: newPassword 
-    });
-    return response.data;
-  }
-
-  async refreshToken() {
-    const response = await this.api.post('/api/v1/auth/refresh');
-    return response.data;
-  }
-
   async logout() {
+    if (USE_MOCK_API) {
+      return await mockApiService.logout();
+    }
+    
     const response = await this.api.post('/api/v1/auth/logout');
     return response.data;
   }
 
   // User endpoints
   async getCurrentUser() {
+    if (USE_MOCK_API) {
+      return await mockApiService.getCurrentUser();
+    }
+    
     const response = await this.api.get('/api/v1/users/me');
     return response.data;
   }
 
   async updateProfile(updates: any) {
+    if (USE_MOCK_API) {
+      return await mockApiService.updateProfile(updates);
+    }
+    
     const response = await this.api.put('/api/v1/users/me/profile', updates);
     return response.data;
   }
 
-  async uploadProfilePicture(file: File) {
-    const formData = new FormData();
-    formData.append('profile_picture', file);
-    const response = await this.api.post('/api/v1/users/me/profile-picture', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-  }
-
   async getDashboardData() {
+    if (USE_MOCK_API) {
+      return await mockApiService.getDashboardData();
+    }
+    
     const response = await this.api.get('/api/v1/users/me/dashboard');
     return response.data;
   }
@@ -188,22 +223,38 @@ class ApiService {
     page?: number; 
     limit?: number; 
   }) {
+    if (USE_MOCK_API) {
+      return await mockApiService.getNotifications(params);
+    }
+    
     const response = await this.api.get('/api/v1/notifications/me', { params });
     return response.data;
   }
 
   async markNotificationAsRead(notificationId: string) {
+    if (USE_MOCK_API) {
+      return await mockApiService.markNotificationAsRead(notificationId);
+    }
+    
     const response = await this.api.put(`/api/v1/notifications/${notificationId}/read`);
     return response.data;
   }
 
   async markAllNotificationsAsRead() {
+    if (USE_MOCK_API) {
+      return await mockApiService.markAllNotificationsAsRead();
+    }
+    
     const response = await this.api.put('/api/v1/notifications/me/read-all');
     return response.data;
   }
 
   // Health check
   async healthCheck() {
+    if (USE_MOCK_API) {
+      return await mockApiService.healthCheck();
+    }
+    
     const response = await this.api.get('/api/v1/health');
     return response.data;
   }
