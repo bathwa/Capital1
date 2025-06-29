@@ -1,10 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { mockApiService } from './mockApi';
+import { supabaseApiService } from './supabaseApi';
 
 // Production API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.abathwa.com';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000');
-const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true' || import.meta.env.DEV;
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true';
+const USE_SUPABASE = import.meta.env.VITE_SUPABASE_URL && !USE_MOCK_API;
 
 class ApiService {
   private api: AxiosInstance;
@@ -60,10 +62,10 @@ class ApiService {
       async (error) => {
         const originalRequest = error.config;
 
-        // If using mock API and network error occurs, fall back to mock
-        if (USE_MOCK_API && !error.response) {
-          console.warn('Network error detected, using mock API fallback');
-          return this.handleMockFallback(originalRequest);
+        // If using Supabase or mock API and network error occurs, fall back
+        if ((USE_SUPABASE || USE_MOCK_API) && !error.response) {
+          console.warn('Network error detected, using fallback API');
+          return this.handleFallback(originalRequest);
         }
 
         // Handle 401 Unauthorized - token expired or invalid
@@ -82,23 +84,20 @@ class ApiService {
           return Promise.reject(error);
         }
 
-        // Handle 403 Forbidden - insufficient permissions
+        // Handle other errors
         if (error.response?.status === 403) {
           console.error('Access forbidden:', error.response.data);
         }
 
-        // Handle 429 Too Many Requests - rate limiting
         if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'];
           console.warn(`Rate limited. Retry after ${retryAfter} seconds`);
         }
 
-        // Handle 500+ Server Errors
         if (error.response?.status >= 500) {
           console.error('Server error:', error.response.data);
         }
 
-        // Handle network errors
         if (!error.response) {
           console.error('Network error:', error.message);
         }
@@ -108,38 +107,41 @@ class ApiService {
     );
   }
 
-  private async handleMockFallback(originalRequest: any) {
+  private async handleFallback(originalRequest: any) {
     const method = originalRequest.method?.toLowerCase();
     const url = originalRequest.url;
     
     try {
+      // Use Supabase if available, otherwise fall back to mock
+      const apiService = USE_SUPABASE ? supabaseApiService : mockApiService;
+      
       if (url.includes('/auth/login') && method === 'post') {
         const { email, password } = originalRequest.data;
-        return { data: await mockApiService.login(email, password) };
+        return { data: await apiService.login(email, password) };
       }
       
       if (url.includes('/auth/register') && method === 'post') {
-        return { data: await mockApiService.register(originalRequest.data) };
+        return { data: await apiService.register(originalRequest.data) };
       }
       
       if (url.includes('/users/me/dashboard') && method === 'get') {
-        return { data: await mockApiService.getDashboardData() };
+        return { data: await apiService.getDashboardData() };
       }
       
       if (url.includes('/users/me') && method === 'get') {
-        return { data: await mockApiService.getCurrentUser() };
+        return { data: await apiService.getCurrentUser() };
       }
       
       if (url.includes('/notifications/me') && method === 'get') {
-        return { data: await mockApiService.getNotifications() };
+        return { data: await apiService.getNotifications() };
       }
       
       if (url.includes('/auth/logout') && method === 'post') {
-        return { data: await mockApiService.logout() };
+        return { data: await apiService.logout() };
       }
       
       // Default fallback
-      return { data: { success: true, message: 'Mock API fallback' } };
+      return { data: { success: true, message: 'Fallback API response' } };
     } catch (error) {
       throw error;
     }
@@ -147,6 +149,10 @@ class ApiService {
 
   // Auth endpoints
   async login(email: string, password: string) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.login(email, password);
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.login(email, password);
     }
@@ -167,6 +173,10 @@ class ApiService {
     role: string;
     organization_name?: string;
   }) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.register(userData);
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.register(userData);
     }
@@ -180,6 +190,10 @@ class ApiService {
   }
 
   async logout() {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.logout();
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.logout();
     }
@@ -190,6 +204,10 @@ class ApiService {
 
   // User endpoints
   async getCurrentUser() {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.getCurrentUser();
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.getCurrentUser();
     }
@@ -199,6 +217,10 @@ class ApiService {
   }
 
   async updateProfile(updates: any) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.updateProfile(updates);
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.updateProfile(updates);
     }
@@ -208,11 +230,53 @@ class ApiService {
   }
 
   async getDashboardData() {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.getDashboardData();
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.getDashboardData();
     }
     
     const response = await this.api.get('/api/v1/users/me/dashboard');
+    return response.data;
+  }
+
+  // Opportunities
+  async getOpportunities(filters?: any) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.getOpportunities(filters);
+    }
+    
+    const response = await this.api.get('/api/v1/opportunities', { params: filters });
+    return response.data;
+  }
+
+  async createOpportunity(opportunityData: any) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.createOpportunity(opportunityData);
+    }
+    
+    const response = await this.api.post('/api/v1/opportunities', opportunityData);
+    return response.data;
+  }
+
+  // Investments
+  async getInvestments(params?: any) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.getInvestments(params);
+    }
+    
+    const response = await this.api.get('/api/v1/investments', { params });
+    return response.data;
+  }
+
+  async createInvestmentOffer(offerData: any) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.createInvestmentOffer(offerData);
+    }
+    
+    const response = await this.api.post('/api/v1/investment-offers', offerData);
     return response.data;
   }
 
@@ -223,6 +287,10 @@ class ApiService {
     page?: number; 
     limit?: number; 
   }) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.getNotifications(params);
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.getNotifications(params);
     }
@@ -232,6 +300,10 @@ class ApiService {
   }
 
   async markNotificationAsRead(notificationId: string) {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.markNotificationAsRead(notificationId);
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.markNotificationAsRead(notificationId);
     }
@@ -241,6 +313,10 @@ class ApiService {
   }
 
   async markAllNotificationsAsRead() {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.markAllNotificationsAsRead();
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.markAllNotificationsAsRead();
     }
@@ -251,6 +327,10 @@ class ApiService {
 
   // Health check
   async healthCheck() {
+    if (USE_SUPABASE) {
+      return await supabaseApiService.healthCheck();
+    }
+    
     if (USE_MOCK_API) {
       return await mockApiService.healthCheck();
     }

@@ -11,6 +11,10 @@ import SignupForm from './components/auth/SignupForm';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import DashboardOverview from './components/dashboard/DashboardOverview';
+import OpportunityList from './components/opportunities/OpportunityList';
+import CreateOpportunityForm from './components/opportunities/CreateOpportunityForm';
+import InvestmentDashboard from './components/investments/InvestmentDashboard';
+import { useAuth } from './context/AuthContext';
 import './i18n';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -23,6 +27,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           {children}
         </main>
       </div>
+    </div>
+  );
+};
+
+const OpportunitiesPage: React.FC = () => {
+  const { user } = useAuth();
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {user?.role === 'ENTREPRENEUR' ? 'My Opportunities' : 'Browse Opportunities'}
+        </h1>
+        {user?.role === 'ENTREPRENEUR' && (
+          <button
+            onClick={() => window.location.href = '/opportunities/create'}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            Create Opportunity
+          </button>
+        )}
+      </div>
+      <OpportunityList userRole={user?.role || ''} userId={user?.id} />
     </div>
   );
 };
@@ -60,57 +87,92 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            
+            {/* Opportunities Routes */}
             <Route
               path="/opportunities"
               element={
-                <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
+                <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR']}>
                   <Layout>
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        My Opportunities
-                      </h1>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Manage your funding opportunities here.
-                      </p>
-                    </div>
+                    <OpportunitiesPage />
                   </Layout>
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/browse-opportunities"
+              path="/opportunities/create"
               element={
-                <ProtectedRoute allowedRoles={['INVESTOR']}>
+                <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
                   <Layout>
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Browse Opportunities
-                      </h1>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Discover investment opportunities in your community.
-                      </p>
-                    </div>
+                    <CreateOpportunityForm />
                   </Layout>
                 </ProtectedRoute>
               }
             />
+            
+            {/* Investment Routes */}
             <Route
               path="/investments"
               element={
                 <ProtectedRoute allowedRoles={['INVESTOR']}>
                   <Layout>
+                    <InvestmentDashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Browse Opportunities for Investors */}
+            <Route
+              path="/browse-opportunities"
+              element={
+                <ProtectedRoute allowedRoles={['INVESTOR']}>
+                  <Layout>
+                    <OpportunitiesPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Service Provider Routes */}
+            <Route
+              path="/service-requests"
+              element={
+                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
+                  <Layout>
                     <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
                       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        My Investments
+                        Service Requests
                       </h1>
                       <p className="text-gray-600 dark:text-gray-300">
-                        Track your investment portfolio and returns.
+                        Manage your service requests and engagements here.
                       </p>
                     </div>
                   </Layout>
                 </ProtectedRoute>
               }
             />
+            
+            {/* Pool Routes */}
+            <Route
+              path="/pools"
+              element={
+                <ProtectedRoute allowedRoles={['INVESTOR']}>
+                  <Layout>
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                        Investment Pools
+                      </h1>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        Join or create investment pools to collaborate with other investors.
+                      </p>
+                    </div>
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Admin Routes */}
             <Route
               path="/admin/*"
               element={
