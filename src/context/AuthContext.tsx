@@ -67,17 +67,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem('abathwa_token');
-      const userData = localStorage.getItem('abathwa_user');
       
-      if (token && userData) {
+      if (token) {
         try {
-          const user = JSON.parse(userData);
-          
-          // Verify token is still valid by fetching current user
+          // Verify token is still valid by fetching current user from production API
           const currentUser = await apiService.getCurrentUser();
           dispatch({ type: 'SET_USER', payload: { user: currentUser, token } });
         } catch (error) {
           console.error('Token validation failed:', error);
+          // Clear invalid token
           localStorage.removeItem('abathwa_token');
           localStorage.removeItem('abathwa_user');
           dispatch({ type: 'SET_LOADING', payload: false });
@@ -94,9 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
+      // Call production login API
       const response = await apiService.login(email, password);
       const { token, user } = response;
       
+      // Store token and user data
       localStorage.setItem('abathwa_token', token);
       localStorage.setItem('abathwa_user', JSON.stringify(user));
       
@@ -107,16 +107,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('abathwa_token');
-    localStorage.removeItem('abathwa_user');
-    dispatch({ type: 'CLEAR_USER' });
+  const logout = async () => {
+    try {
+      // Call production logout API to invalidate token on server
+      await apiService.logout();
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Clear local storage and state
+      localStorage.removeItem('abathwa_token');
+      localStorage.removeItem('abathwa_user');
+      dispatch({ type: 'CLEAR_USER' });
+    }
   };
 
   const register = async (userData: any) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
+      // Call production registration API
       await apiService.register(userData);
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error) {
@@ -127,11 +137,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
+      // Call production profile update API
       const updatedUser = await apiService.updateProfile(updates);
       dispatch({ type: 'UPDATE_USER', payload: updatedUser });
       
+      // Update local storage
       if (state.user) {
-        localStorage.setItem('abathwa_user', JSON.stringify({ ...state.user, ...updatedUser }));
+        const newUserData = { ...state.user, ...updatedUser };
+        localStorage.setItem('abathwa_user', JSON.stringify(newUserData));
       }
     } catch (error) {
       throw error;

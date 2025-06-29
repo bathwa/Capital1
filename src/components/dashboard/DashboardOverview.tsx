@@ -24,9 +24,11 @@ interface StatCard {
 }
 
 interface Activity {
+  id: string;
   type: string;
   message: string;
-  time: string;
+  created_at: string;
+  is_read: boolean;
 }
 
 const DashboardOverview: React.FC = () => {
@@ -35,6 +37,7 @@ const DashboardOverview: React.FC = () => {
   const [stats, setStats] = useState<StatCard[]>([]);
   const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -42,25 +45,32 @@ const DashboardOverview: React.FC = () => {
 
       try {
         setLoading(true);
+        setError(null);
         
-        // Fetch role-specific dashboard data
-        const dashboardData = await apiService.getCurrentUser();
+        // Fetch dashboard data from production API
+        const [dashboardData, notifications] = await Promise.all([
+          apiService.getDashboardData(),
+          apiService.getNotifications({ limit: 5 })
+        ]);
         
-        // Set stats based on user role
+        // Set stats based on user role and real data
         const roleStats = getStatsForRole(user.role, dashboardData);
         setStats(roleStats);
 
-        // Fetch recent activity
-        const notifications = await apiService.getNotifications();
-        const activities = notifications.slice(0, 4).map((notif: any) => ({
-          type: notif.type.toLowerCase(),
+        // Set recent activity from real notifications
+        const activities = notifications.data?.map((notif: any) => ({
+          id: notif.id,
+          type: notif.type,
           message: notif.message,
-          time: new Date(notif.created_at).toLocaleString()
-        }));
+          created_at: notif.created_at,
+          is_read: notif.is_read
+        })) || [];
+        
         setRecentActivity(activities);
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch dashboard data:', error);
+        setError(error.response?.data?.message || 'Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -75,31 +85,31 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('dashboard.totalUsers'),
-            value: data.total_users || '0',
+            value: data.total_users?.toString() || '0',
             icon: <Users className="h-6 w-6 text-primary-600" />,
-            change: '+12%',
+            change: data.user_growth_percentage ? `+${data.user_growth_percentage}%` : undefined,
             changeType: 'positive',
             description: t('dashboard.activeUsers')
           },
           {
             title: t('dashboard.pendingApprovals'),
-            value: data.pending_approvals || '0',
+            value: data.pending_approvals?.toString() || '0',
             icon: <Clock className="h-6 w-6 text-warning-600" />,
             description: t('opportunities.pendingReview')
           },
           {
             title: t('dashboard.activeInvestments'),
-            value: `$${data.active_investments || '0'}`,
+            value: `$${data.total_active_investments?.toLocaleString() || '0'}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
-            change: '+18%',
+            change: data.investment_growth_percentage ? `+${data.investment_growth_percentage}%` : undefined,
             changeType: 'positive',
             description: t('investments.totalActive')
           },
           {
             title: t('dashboard.platformRevenue'),
-            value: `$${data.platform_revenue || '0'}`,
+            value: `$${data.platform_revenue?.toLocaleString() || '0'}`,
             icon: <TrendingUp className="h-6 w-6 text-accent-600" />,
-            change: '+25%',
+            change: data.revenue_growth_percentage ? `+${data.revenue_growth_percentage}%` : undefined,
             changeType: 'positive',
             description: t('dashboard.monthlyFees')
           }
@@ -109,15 +119,15 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('opportunities.activeOpportunities'),
-            value: data.active_opportunities || '0',
+            value: data.active_opportunities?.toString() || '0',
             icon: <TrendingUp className="h-6 w-6 text-primary-600" />,
             description: t('opportunities.seekingFunding')
           },
           {
             title: t('dashboard.totalFunded'),
-            value: `$${data.total_funded || '0'}`,
+            value: `$${data.total_funded?.toLocaleString() || '0'}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
-            change: '+15%',
+            change: data.funding_growth_percentage ? `+${data.funding_growth_percentage}%` : undefined,
             changeType: 'positive',
             description: t('dashboard.lifetimeFunding')
           },
@@ -125,13 +135,13 @@ const DashboardOverview: React.FC = () => {
             title: t('dashboard.reliabilityScore'),
             value: `${data.reliability_score || '0'}%`,
             icon: <CheckCircle className="h-6 w-6 text-success-600" />,
-            change: '+5%',
-            changeType: 'positive',
+            change: data.reliability_change ? `${data.reliability_change > 0 ? '+' : ''}${data.reliability_change}%` : undefined,
+            changeType: data.reliability_change > 0 ? 'positive' : 'negative',
             description: t('dashboard.milestoneCompletion')
           },
           {
             title: t('milestones.overdue'),
-            value: data.overdue_milestones || '0',
+            value: data.overdue_milestones?.toString() || '0',
             icon: <AlertTriangle className="h-6 w-6 text-error-600" />,
             description: t('milestones.requireAttention')
           }
@@ -141,27 +151,27 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('investments.activeInvestments'),
-            value: data.active_investments || '0',
+            value: data.active_investments?.toString() || '0',
             icon: <TrendingUp className="h-6 w-6 text-primary-600" />,
             description: t('investments.currentlyInvested')
           },
           {
             title: t('investments.totalInvested'),
-            value: `$${data.total_invested || '0'}`,
+            value: `$${data.total_invested?.toLocaleString() || '0'}`,
             icon: <DollarSign className="h-6 w-6 text-primary-600" />,
             description: t('investments.lifetimeAmount')
           },
           {
             title: t('dashboard.portfolioROI'),
-            value: `+${data.portfolio_roi || '0'}%`,
+            value: `${data.portfolio_roi > 0 ? '+' : ''}${data.portfolio_roi || '0'}%`,
             icon: <TrendingUp className="h-6 w-6 text-success-600" />,
-            change: '+2.1%',
-            changeType: 'positive',
+            change: data.roi_change ? `${data.roi_change > 0 ? '+' : ''}${data.roi_change}%` : undefined,
+            changeType: data.roi_change > 0 ? 'positive' : 'negative',
             description: t('investments.averageReturn')
           },
           {
             title: t('pools.memberships'),
-            value: data.pool_memberships || '0',
+            value: data.pool_memberships?.toString() || '0',
             icon: <Users className="h-6 w-6 text-accent-600" />,
             description: t('pools.poolsJoined')
           }
@@ -171,29 +181,29 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('serviceProviders.activeRequests'),
-            value: data.active_requests || '0',
+            value: data.active_requests?.toString() || '0',
             icon: <FileText className="h-6 w-6 text-primary-600" />,
             description: t('serviceProviders.currentEngagements')
           },
           {
             title: t('serviceProviders.completedServices'),
-            value: data.completed_services || '0',
+            value: data.completed_services?.toString() || '0',
             icon: <CheckCircle className="h-6 w-6 text-success-600" />,
-            change: '+8',
+            change: data.services_growth ? `+${data.services_growth}` : undefined,
             changeType: 'positive',
             description: t('serviceProviders.successfullyDelivered')
           },
           {
             title: t('dashboard.totalEarnings'),
-            value: `$${data.total_earnings || '0'}`,
+            value: `$${data.total_earnings?.toLocaleString() || '0'}`,
             icon: <DollarSign className="h-6 w-6 text-success-600" />,
-            change: '+12%',
+            change: data.earnings_growth_percentage ? `+${data.earnings_growth_percentage}%` : undefined,
             changeType: 'positive',
             description: t('serviceProviders.platformEarnings')
           },
           {
             title: t('dashboard.rating'),
-            value: `${data.rating || '0'}/5`,
+            value: `${data.average_rating || '0'}/5`,
             icon: <CheckCircle className="h-6 w-6 text-accent-600" />,
             description: t('serviceProviders.clientSatisfaction')
           }
@@ -203,25 +213,25 @@ const DashboardOverview: React.FC = () => {
         return [
           {
             title: t('observer.observedEntities'),
-            value: data.observed_entities || '0',
+            value: data.observed_entities?.toString() || '0',
             icon: <Eye className="h-6 w-6 text-primary-600" />,
             description: t('observer.entitiesMonitored')
           },
           {
             title: t('observer.permissions'),
-            value: data.access_permissions || '0',
+            value: data.access_permissions?.toString() || '0',
             icon: <Users className="h-6 w-6 text-success-600" />,
             description: t('observer.accessLevels')
           },
           {
             title: t('dashboard.recentReports'),
-            value: data.recent_reports || '0',
+            value: data.recent_reports?.toString() || '0',
             icon: <FileText className="h-6 w-6 text-accent-600" />,
             description: t('dashboard.newReportsAvailable')
           },
           {
             title: t('dashboard.alerts'),
-            value: data.alerts || '0',
+            value: data.alerts?.toString() || '0',
             icon: <AlertTriangle className="h-6 w-6 text-warning-600" />,
             description: t('dashboard.performanceAlerts')
           }
@@ -244,12 +254,34 @@ const DashboardOverview: React.FC = () => {
     }
   };
 
+  const formatActivityTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInHours < 48) return 'Yesterday';
+    return date.toLocaleDateString();
+  };
+
   if (!user) return null;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 rounded-lg p-6">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 text-error-600 mr-2" />
+          <span className="text-error-800 dark:text-error-200">{error}</span>
+        </div>
       </div>
     );
   }
@@ -325,15 +357,22 @@ const DashboardOverview: React.FC = () => {
         <div className="p-6">
           <div className="space-y-4">
             {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3">
+              recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3">
                   <div className="flex-shrink-0 mt-0.5">
                     {getActivityIcon(activity.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
+                    <p className={`text-sm ${activity.is_read ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white font-medium'}`}>
+                      {activity.message}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {formatActivityTime(activity.created_at)}
+                    </p>
                   </div>
+                  {!activity.is_read && (
+                    <div className="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0 mt-2"></div>
+                  )}
                 </div>
               ))
             ) : (
@@ -343,11 +382,13 @@ const DashboardOverview: React.FC = () => {
             )}
           </div>
           
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium">
-              {t('dashboard.viewAll')} →
-            </button>
-          </div>
+          {recentActivity.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 font-medium">
+                {t('dashboard.viewAll')} →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

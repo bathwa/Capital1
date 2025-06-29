@@ -164,18 +164,6 @@ const LoginForm: React.FC = () => {
             </p>
           </div>
         </form>
-
-        {/* Demo Credentials for Testing */}
-        <div className="mt-8 p-4 bg-accent-50 dark:bg-accent-900 border border-accent-200 dark:border-accent-700 rounded-lg">
-          <h4 className="font-medium text-accent-800 dark:text-accent-200 mb-2">
-            {t('auth.demoCredentials')}
-          </h4>
-          <div className="space-y-1 text-sm text-accent-700 dark:text-accent-300">
-            <p><strong>{t('roles.admin')}:</strong> admin@abathwa.com / password123</p>
-            <p><strong>{t('roles.entrepreneur')}:</strong> entrepreneur@test.com / password123</p>
-            <p><strong>{t('roles.investor')}:</strong> investor@test.com / password123</p>
-          </div>
-        </div>
       </div>
     </div>
   );
