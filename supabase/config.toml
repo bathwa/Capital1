@@ -33,5 +33,6 @@ enable_confirmations = false
 enabled = true
 file_size_limit = "50MiB"
 
-[edge_functions]
-enabled = true
+# Edge Functions configuration
+# [edge_functions]
+# enabled = true
