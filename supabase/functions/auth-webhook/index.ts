@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
           email: record.email,
           first_name: metadata.first_name || 'User',
           last_name: metadata.last_name || 'Name',
-          phone_number: metadata.phone_number || null, // Use null instead of empty string
+          phone_number: metadata.phone_number || '+1000000000', // Provide valid phone number format
           role: metadata.role || 'ENTREPRENEUR',
           status: 'ACTIVE',
           profile_completion_percentage: 30,
