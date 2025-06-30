@@ -42,7 +42,7 @@ Deno.serve(async (req: Request) => {
           email: record.email,
           first_name: metadata.first_name || 'User',
           last_name: metadata.last_name || 'Name',
-          phone_number: metadata.phone_number || null, // phone_number is nullable
+          phone_number: metadata.phone_number || '', // Use empty string instead of null
           role: metadata.role || 'ENTREPRENEUR',
           status: 'ACTIVE',
           profile_completion_percentage: 30,
