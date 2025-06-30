@@ -44,7 +44,7 @@ Deno.serve(async (req: Request) => {
         last_name: (metadata.last_name && metadata.last_name.trim() && metadata.last_name.trim().length >= 1 && metadata.last_name.trim().length <= 50) 
           ? metadata.last_name.trim() 
           : 'Name',
-        phone_number: metadata.phone_number ? metadata.phone_number.trim() : '',
+        phone_number: metadata.phone_number && metadata.phone_number.trim() !== '' ? metadata.phone_number.trim() : null,
         role: (metadata.role && ['ADMIN', 'ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER', 'OBSERVER'].includes(metadata.role)) 
           ? metadata.role 
           : 'ENTREPRENEUR',
