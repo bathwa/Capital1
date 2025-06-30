@@ -36,12 +36,12 @@ Deno.serve(async (req: Request) => {
       let organizationId = null;
 
       // If organization name is provided, try to find existing organization or create new one
-      if (metadata.organization_name) {
+      if (metadata.organization_name && metadata.organization_name.trim()) {
         // First, try to find existing organization
         const { data: existingOrg, error: findError } = await supabase
           .from('organizations')
           .select('id')
-          .eq('name', metadata.organization_name)
+          .eq('name', metadata.organization_name.trim())
           .single();
 
         if (findError && findError.code !== 'PGRST116') { // PGRST116 is "not found" error
@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
           const { data: orgData, error: orgError } = await supabase
             .from('organizations')
             .insert({
-              name: metadata.organization_name,
+              name: metadata.organization_name.trim(),
               owner_id: record.id,
               status: 'PENDING'
             })
@@ -74,12 +74,20 @@ Deno.serve(async (req: Request) => {
       const userData = {
         id: record.id,
         email: record.email,
-        first_name: (metadata.first_name && metadata.first_name.trim()) || 'User',
-        last_name: (metadata.last_name && metadata.last_name.trim()) || 'Name',
-        role: metadata.role || 'ENTREPRENEUR',
+        first_name: (metadata.first_name && metadata.first_name.trim() && metadata.first_name.trim().length >= 1 && metadata.first_name.trim().length <= 50) 
+          ? metadata.first_name.trim() 
+          : 'User',
+        last_name: (metadata.last_name && metadata.last_name.trim() && metadata.last_name.trim().length >= 1 && metadata.last_name.trim().length <= 50) 
+          ? metadata.last_name.trim() 
+          : 'Name',
+        role: (metadata.role && ['ADMIN', 'ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER', 'OBSERVER'].includes(metadata.role)) 
+          ? metadata.role 
+          : 'ENTREPRENEUR',
         status: 'ACTIVE', // Set to ACTIVE instead of PENDING_EMAIL_CONFIRMATION
         profile_completion_percentage: 30,
-        reliability_score: 0
+        reliability_score: 0,
+        preferences: {},
+        metadata: {}
       };
 
       // Only add organization_id if we have a valid UUID
@@ -94,15 +102,23 @@ Deno.serve(async (req: Request) => {
         userData.phone_number = metadata.phone_number.trim();
       }
 
+      console.log('Attempting to create user profile with data:', JSON.stringify(userData, null, 2));
+
       const { data, error } = await supabase
         .from('users')
-        .insert(userData);
+        .insert(userData)
+        .select();
 
       if (error) {
         console.error('Error creating user profile:', error);
-        console.error('User data that failed:', userData);
+        console.error('User data that failed:', JSON.stringify(userData, null, 2));
+        console.error('Full error details:', JSON.stringify(error, null, 2));
         return new Response(
-          JSON.stringify({ error: error.message }),
+          JSON.stringify({ 
+            error: 'Failed to create user profile',
+            details: error.message,
+            code: error.code 
+          }),
           { 
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -123,8 +139,12 @@ Deno.serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Webhook error:', error);
+    console.error('Error stack:', error.stack);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        message: error.message 
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
