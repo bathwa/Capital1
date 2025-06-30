@@ -34,14 +34,15 @@ Deno.serve(async (req: Request) => {
       const metadata = record.raw_user_meta_data || {};
       
       // Create user profile when auth user is created
+      // Ensure required fields meet database constraints (min length 1)
       const { data, error } = await supabase
         .from('users')
         .insert({
           id: record.id,
           email: record.email,
-          first_name: metadata.first_name || '',
-          last_name: metadata.last_name || '',
-          phone_number: metadata.phone_number || '',
+          first_name: metadata.first_name || 'User',
+          last_name: metadata.last_name || 'Name',
+          phone_number: metadata.phone_number || null, // phone_number is nullable
           role: metadata.role || 'ENTREPRENEUR',
           status: 'ACTIVE',
           profile_completion_percentage: 30,
