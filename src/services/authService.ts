@@ -53,7 +53,7 @@ class AuthService {
     }
   }
 
-  async signup(credentials: SignupCredentials): Promise<AuthResponse> {
+  async register(credentials: SignupCredentials): Promise<AuthResponse> {
     try {
       // First, sign up the user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
