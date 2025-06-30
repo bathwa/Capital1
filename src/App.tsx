@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { I18nProvider } from './context/I18nContext';
+import { AgreementsProvider } from './context/AgreementsContext';
 import { useTranslation } from 'react-i18next';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import OfflineIndicator from './components/common/OfflineIndicator';
@@ -28,6 +30,25 @@ import AgreementsPage from './pages/AgreementsPage';
 import ServiceRequestsPage from './pages/ServiceRequestsPage';
 import { useAuth } from './context/AuthContext';
 import './i18n';
+
+// Initialize i18n
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    fallbackLng: 'en',
+    detection: {
+      order: ['path', 'htmlTag', 'cookie', 'navigator'],
+      caches: ['cookie'],
+    },
+    interpolation: {
+      escapeValue: false,
+    },
+  });
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -79,228 +100,232 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <OfflineIndicator />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/signup" element={<SignupForm />} />
-            <Route path="/forgot-password" element={<PasswordResetRequest />} />
-            <Route path="/reset-password" element={<PasswordResetConfirm />} />
-            <Route path="/verify-email" element={<EmailVerification />} />
-            <Route path="/unauthorized" element={<UnauthorizedPage />} />
-            
-            {/* Protected Routes - Role-based Dashboards */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <DashboardOverview />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+      <I18nProvider>
+        <AuthProvider>
+          <AgreementsProvider>
+            <Router>
+            <OfflineIndicator />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/signup" element={<SignupForm />} />
+              <Route path="/forgot-password" element={<PasswordResetRequest />} />
+              <Route path="/reset-password" element={<PasswordResetConfirm />} />
+              <Route path="/verify-email" element={<EmailVerification />} />
+              <Route path="/unauthorized" element={<UnauthorizedPage />} />
+              
+              {/* Protected Routes - Role-based Dashboards */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <DashboardOverview />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Admin Dashboard */}
-            <Route
-              path="/admin-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Layout>
-                    <AdminDashboardPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Admin Dashboard */}
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Layout>
+                      <AdminDashboardPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Entrepreneur Dashboard */}
-            <Route
-              path="/entrepreneur-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
-                  <Layout>
-                    <DashboardOverview />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Entrepreneur Dashboard */}
+              <Route
+                path="/entrepreneur-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
+                    <Layout>
+                      <DashboardOverview />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Investor Dashboard */}
-            <Route
-              path="/investor-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['INVESTOR']}>
-                  <Layout>
-                    <InvestorDashboardPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Investor Dashboard */}
+              <Route
+                path="/investor-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['INVESTOR']}>
+                    <Layout>
+                      <InvestorDashboardPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Service Provider Dashboard */}
-            <Route
-              path="/service-provider-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
-                  <Layout>
-                    <ServiceProviderDashboardPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Service Provider Dashboard */}
+              <Route
+                path="/service-provider-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
+                    <Layout>
+                      <ServiceProviderDashboardPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Observer Dashboard */}
-            <Route
-              path="/observer-dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['OBSERVER']}>
-                  <Layout>
-                    <ObserverDashboardPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Observer Dashboard */}
+              <Route
+                path="/observer-dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['OBSERVER']}>
+                    <Layout>
+                      <ObserverDashboardPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Profile Route */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <UserProfile />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Profile Route */}
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <UserProfile />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Settings Route */}
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Layout>
-                    <SettingsPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Settings Route */}
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <SettingsPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Agreements Route */}
-            <Route
-              path="/agreements"
-              element={
-                <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER']}>
-                  <Layout>
-                    <AgreementsPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Agreements Route */}
+              <Route
+                path="/agreements"
+                element={
+                  <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER']}>
+                    <Layout>
+                      <AgreementsPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Service Requests Route */}
-            <Route
-              path="/service-requests"
-              element={
-                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
-                  <Layout>
-                    <ServiceRequestsPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Opportunities Routes */}
-            <Route
-              path="/opportunities"
-              element={
-                <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR']}>
-                  <Layout>
-                    <OpportunitiesPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/opportunities/create"
-              element={
-                <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
-                  <Layout>
-                    <CreateOpportunityForm />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Investment Routes */}
-            <Route
-              path="/investments"
-              element={
-                <ProtectedRoute allowedRoles={['INVESTOR']}>
-                  <Layout>
-                    <InvestmentDashboard />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Browse Opportunities for Investors */}
-            <Route
-              path="/browse-opportunities"
-              element={
-                <ProtectedRoute allowedRoles={['INVESTOR']}>
-                  <Layout>
-                    <OpportunitiesPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Pool Routes */}
-            <Route
-              path="/pools"
-              element={
-                <ProtectedRoute allowedRoles={['INVESTOR']}>
-                  <Layout>
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Investment Pools
-                      </h1>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Join or create investment pools to collaborate with other investors.
-                      </p>
-                    </div>
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Admin Routes */}
-            <Route
-              path="/admin/*"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Layout>
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Admin Panel
-                      </h1>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Platform administration and management tools.
-                      </p>
-                    </div>
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
+              {/* Service Requests Route */}
+              <Route
+                path="/service-requests"
+                element={
+                  <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
+                    <Layout>
+                      <ServiceRequestsPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Opportunities Routes */}
+              <Route
+                path="/opportunities"
+                element={
+                  <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR']}>
+                    <Layout>
+                      <OpportunitiesPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/opportunities/create"
+                element={
+                  <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
+                    <Layout>
+                      <CreateOpportunityForm />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Investment Routes */}
+              <Route
+                path="/investments"
+                element={
+                  <ProtectedRoute allowedRoles={['INVESTOR']}>
+                    <Layout>
+                      <InvestmentDashboard />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Browse Opportunities for Investors */}
+              <Route
+                path="/browse-opportunities"
+                element={
+                  <ProtectedRoute allowedRoles={['INVESTOR']}>
+                    <Layout>
+                      <OpportunitiesPage />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Pool Routes */}
+              <Route
+                path="/pools"
+                element={
+                  <ProtectedRoute allowedRoles={['INVESTOR']}>
+                    <Layout>
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                          Investment Pools
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Join or create investment pools to collaborate with other investors.
+                        </p>
+                      </div>
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Admin Routes */}
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN']}>
+                    <Layout>
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                          Admin Panel
+                        </h1>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Platform administration and management tools.
+                        </p>
+                      </div>
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </AgreementsProvider>
       </AuthProvider>
+      </I18nProvider>
     </ErrorBoundary>
   );
 }

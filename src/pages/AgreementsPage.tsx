@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { 
   FileText, 
   Shield, 
@@ -14,61 +13,21 @@ import {
   Search,
   Filter
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { Agreement } from '../services/agreementsService';
+import { useI18n } from '../context/I18nContext';
+import { useAgreements } from '../context/AgreementsContext';
 
 const AgreementsPage: React.FC = () => {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState<'all' | 'investment' | 'nda' | 'service'>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'pending' | 'executed' | 'expired'>('all');
-
-  // Mock data for demonstration
-  const agreements = [
-    {
-      id: 1,
-      type: 'INVESTMENT_AGREEMENT',
-      title: 'Investment Agreement - Solar Energy Project',
-      parties: ['Green Energy Solutions Ltd.', 'Investment Group A'],
-      opportunity: 'Solar Energy Installation Project',
-      amount: 25000,
-      equity: 8,
-      status: 'FULLY_EXECUTED',
-      createdDate: '2024-01-15',
-      signedDate: '2024-01-18',
-      documentUrl: '/agreements/investment-001.pdf',
-      signatures: [
-        { party: 'Green Energy Solutions Ltd.', signedAt: '2024-01-17', type: 'digital' },
-        { party: 'Investment Group A', signedAt: '2024-01-18', type: 'digital' }
-      ]
-    },
-    {
-      id: 2,
-      type: 'NDA',
-      title: 'Non-Disclosure Agreement - AgriTech Project',
-      parties: ['Farm Solutions Co.', 'Tech Consultant Ltd.'],
-      opportunity: 'Agricultural Equipment Rental',
-      status: 'PENDING_SIGNATURES',
-      createdDate: '2024-01-19',
-      documentUrl: '/agreements/nda-002.pdf',
-      signatures: [
-        { party: 'Farm Solutions Co.', signedAt: '2024-01-19', type: 'digital' }
-      ]
-    },
-    {
-      id: 3,
-      type: 'SERVICE_AGREEMENT',
-      title: 'Legal Services Agreement',
-      parties: ['Mobile Payment Ltd.', 'Legal Advisory Services'],
-      opportunity: 'Mobile Payment Platform Expansion',
-      amount: 3500,
-      status: 'DRAFT',
-      createdDate: '2024-01-20',
-      documentUrl: '/agreements/service-003.pdf',
-      signatures: []
-    }
-  ];
+  const { t } = useI18n();
+  const { 
+    agreements, 
+    activeTab,
+    searchTerm,
+    statusFilter,
+    setActiveTab,
+    setSearchTerm,
+    setStatusFilter
+  } = useAgreements();
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -126,9 +85,9 @@ const AgreementsPage: React.FC = () => {
     }
   };
 
-  const filteredAgreements = agreements.filter(agreement => {
+  const filteredAgreements = agreements.filter((agreement: Agreement) => {
     const matchesSearch = agreement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         agreement.parties.some(party => party.toLowerCase().includes(searchTerm.toLowerCase()));
+                         agreement.parties.some((party: string) => party.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTab = activeTab === 'all' || 
                       (activeTab === 'investment' && agreement.type === 'INVESTMENT_AGREEMENT') ||
                       (activeTab === 'nda' && agreement.type === 'NDA') ||
@@ -167,13 +126,13 @@ const AgreementsPage: React.FC = () => {
           <nav className="flex space-x-8">
             {[
               { id: 'all', label: 'All Agreements', count: agreements.length },
-              { id: 'investment', label: t('agreements.investmentAgreement'), count: agreements.filter(a => a.type === 'INVESTMENT_AGREEMENT').length },
-              { id: 'nda', label: t('agreements.nda'), count: agreements.filter(a => a.type === 'NDA').length },
-              { id: 'service', label: t('agreements.serviceAgreement'), count: agreements.filter(a => a.type === 'SERVICE_AGREEMENT').length }
+              { id: 'investment', label: t('agreements.investmentAgreement'), count: agreements.filter((a: Agreement) => a.type === 'INVESTMENT_AGREEMENT').length },
+              { id: 'nda', label: t('agreements.nda'), count: agreements.filter((a: Agreement) => a.type === 'NDA').length },
+              { id: 'service', label: t('agreements.serviceAgreement'), count: agreements.filter((a: Agreement) => a.type === 'SERVICE_AGREEMENT').length }
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'all' | 'investment' | 'nda' | 'service')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
@@ -196,7 +155,7 @@ const AgreementsPage: React.FC = () => {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Search agreements..."
             />
@@ -204,14 +163,14 @@ const AgreementsPage: React.FC = () => {
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as 'all' | 'draft' | 'pending' | 'executed' | 'expired')}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           >
-            <option value="all">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="pending">Pending Signatures</option>
-            <option value="executed">Fully Executed</option>
-            <option value="expired">Expired</option>
+            <option value="all">{t('agreements.all')}</option>
+            <option value="draft">{t('agreements.draft')}</option>
+            <option value="pending">{t('agreements.pending')}</option>
+            <option value="executed">{t('agreements.executed')}</option>
+            <option value="expired">{t('agreements.expired')}</option>
           </select>
 
           <button className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -223,7 +182,7 @@ const AgreementsPage: React.FC = () => {
 
       {/* Agreements List */}
       <div className="space-y-4">
-        {filteredAgreements.map((agreement) => (
+        {filteredAgreements.map((agreement: Agreement) => (
           <div key={agreement.id} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div className="flex items-start space-x-4 flex-1">
@@ -242,7 +201,7 @@ const AgreementsPage: React.FC = () => {
                     <div className="flex items-center space-x-1">
                       {getStatusIcon(agreement.status)}
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(agreement.status)}`}>
-                        {agreement.status.replace('_', ' ')}
+                        {t(`agreements.${agreement.status.toLowerCase()}`)}
                       </span>
                     </div>
                   </div>
@@ -333,8 +292,8 @@ const AgreementsPage: React.FC = () => {
           </h3>
           <p className="text-gray-500 dark:text-gray-400">
             {searchTerm || statusFilter !== 'all' 
-              ? 'Try adjusting your search or filters'
-              : 'Create your first agreement to get started'
+              ? t('agreements.noResults')
+              : t('agreements.noAgreements')
             }
           </p>
         </div>

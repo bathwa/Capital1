@@ -1,0 +1,69 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "confirm": "Confirmer",
+    "close": "Fermer"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "forgotPassword": "Mot de passe oublié",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "loginWith": "Se connecter avec",
+    "signUp": "S'inscrire",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "loginSuccess": "Connexion réussie",
+    "registerSuccess": "Inscription réussie",
+    "passwordResetSuccess": "Réinitialisation du mot de passe réussie",
+    "verificationSuccess": "Vérification de l'email réussie"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue",
+    "overview": "Aperçu",
+    "statistics": "Statistiques",
+    "recentActivity": "Activité récente",
+    "notifications": "Notifications"
+  },
+  "agreements": {
+    "title": "Accords",
+    "generateAgreement": "Générer un accord",
+    "investmentAgreement": "Accord d'investissement",
+    "nda": "NDA",
+    "serviceAgreement": "Accord de service",
+    "draft": "Brouillon",
+    "pending": "En attente de signature",
+    "executed": "Exécuté",
+    "expired": "Expiré",
+    "signAgreement": "Signer l'accord",
+    "parties": "Parties",
+    "opportunity": "Opportunité",
+    "amount": "Montant",
+    "equity": "Part",
+    "created": "Créé",
+    "signed": "Signé"
+  },
+  "opportunities": {
+    "title": "Opportunités",
+    "create": "Créer une opportunité",
+    "browse": "Parcourir les opportunités",
+    "myOpportunities": "Mes opportunités",
+    "status": "Statut",
+    "category": "Catégorie",
+    "location": "Localisation",
+    "investmentAmount": "Montant de l'investissement",
+    "equityOffered": "Part proposée",
+    "description": "Description",
+    "documents": "Documents"
+  }
+}
