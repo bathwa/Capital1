@@ -29,7 +29,7 @@ import SettingsPage from './pages/SettingsPage';
 import AgreementsPage from './pages/AgreementsPage';
 import ServiceRequestsPage from './pages/ServiceRequestsPage';
 import { useAuth } from './context/AuthContext';
-import './i18n';
+import './i18n/index';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (

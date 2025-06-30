@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Abathwa Capital</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .error { color: red; background: #ffe6e6; padding: 10px; margin: 10px 0; }
+        .success { color: green; background: #e6ffe6; padding: 10px; margin: 10px 0; }
+        .info { color: blue; background: #e6f3ff; padding: 10px; margin: 10px 0; }
+        #results { margin-top: 20px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Abathwa Capital Debug Console</h1>
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            results.appendChild(div);
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+        
+        function logError(message, error = null) {
+            const errorDetails = error ? `<pre>${error.stack || error.message || error}</pre>` : '';
+            log(`❌ ${message}${errorDetails}`, 'error');
+        }
+        
+        function logSuccess(message) {
+            log(`✅ ${message}`, 'success');
+        }
+        
+        function logInfo(message) {
+            log(`ℹ️ ${message}`, 'info');
+        }
+        
+        // Capture all JavaScript errors
+        window.addEventListener('error', (e) => {
+            logError(`JavaScript Error: ${e.message}`, e.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            logError(`Unhandled Promise Rejection: ${e.reason}`);
+        });
+        
+        // Test functions
+        async function testBasicFunctionality() {
+            logInfo('🚀 Starting Abathwa Capital debug tests...');
+            
+            try {
+                // Test 1: Check if React is available
+                if (typeof React !== 'undefined') {
+                    logSuccess('React is loaded');
+                } else {
+                    logInfo('React not found in global scope (normal for modern apps)');
+                }
+                
+                // Test 2: Try to fetch the main app
+                logInfo('Testing app accessibility...');
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    logSuccess('App server is responding');
+                    const html = await response.text();
+                    if (html.includes('Abathwa Capital')) {
+                        logSuccess('App has correct title');
+                    } else {
+                        logError('App title not found');
+                    }
+                } else {
+                    logError(`App server returned status: ${response.status}`);
+                }
+                
+                // Test 3: Try to fetch the main.tsx
+                logInfo('Testing main.tsx compilation...');
+                const mainResponse = await fetch('http://localhost:5173/src/main.tsx');
+                if (mainResponse.ok) {
+                    logSuccess('main.tsx compiles successfully');
+                } else {
+                    logError(`main.tsx compilation failed: ${mainResponse.status}`);
+                }
+                
+                // Test 4: Try to fetch App.tsx
+                logInfo('Testing App.tsx compilation...');
+                const appResponse = await fetch('http://localhost:5173/src/App.tsx');
+                if (appResponse.ok) {
+                    logSuccess('App.tsx compiles successfully');
+                } else {
+                    logError(`App.tsx compilation failed: ${appResponse.status}`);
+                }
+                
+                // Test 5: Try to fetch i18n
+                logInfo('Testing i18n configuration...');
+                const i18nResponse = await fetch('http://localhost:5173/src/i18n/index.ts');
+                if (i18nResponse.ok) {
+                    logSuccess('i18n configuration compiles successfully');
+                } else {
+                    logError(`i18n configuration failed: ${i18nResponse.status}`);
+                }
+                
+                // Test 6: Check actual page content
+                logInfo('Testing actual page render...');
+                const signupResponse = await fetch('http://localhost:5173/signup');
+                if (signupResponse.ok) {
+                    const signupHtml = await signupResponse.text();
+                    if (signupHtml.includes('name="email"')) {
+                        logSuccess('Signup page renders with form fields');
+                    } else if (signupHtml.includes('<div id="root"></div>')) {
+                        logError('Signup page shows empty React root - JavaScript is not executing');
+                    } else {
+                        logError('Signup page has unexpected content');
+                    }
+                } else {
+                    logError(`Signup page failed to load: ${signupResponse.status}`);
+                }
+                
+            } catch (error) {
+                logError('Test execution failed', error);
+            }
+        }
+        
+        // Run tests when page loads
+        document.addEventListener('DOMContentLoaded', testBasicFunctionality);
+        
+        // Also provide manual test button
+        setTimeout(() => {
+            const button = document.createElement('button');
+            button.textContent = '🔄 Run Tests Again';
+            button.onclick = testBasicFunctionality;
+            button.style.marginTop = '20px';
+            button.style.padding = '10px 20px';
+            button.style.fontSize = '16px';
+            document.body.appendChild(button);
+        }, 1000);
+        
+    </script>
+</body>
+</html>
