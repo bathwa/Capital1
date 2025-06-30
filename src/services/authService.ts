@@ -55,7 +55,8 @@ class AuthService {
 
   async register(credentials: SignupCredentials): Promise<AuthResponse> {
     try {
-      // First, sign up the user with Supabase Auth
+      // Sign up the user with Supabase Auth
+      // The auth webhook will handle creating the user profile in the database
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -74,34 +75,10 @@ class AuthService {
         return { user: null, error };
       }
 
-      // If signup successful, create user profile in our users table
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: credentials.email,
-            first_name: credentials.firstName,
-            last_name: credentials.lastName,
-            role: credentials.role,
-            organization_name: credentials.organizationName,
-            phone_number: credentials.phoneNumber,
-            status: 'PENDING_EMAIL_CONFIRMATION',
-            email_verified: false,
-            profile_completion_percentage: 30,
-            reliability_score: 0,
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Note: User is still created in auth, but profile creation failed
-        }
-
-        // Store authentication data in localStorage if session exists
-        if (data.session) {
-          localStorage.setItem('abathwa_token', data.session.access_token);
-          localStorage.setItem('abathwa_user', JSON.stringify(data.user));
-        }
+      // Store authentication data in localStorage if session exists
+      if (data.user && data.session) {
+        localStorage.setItem('abathwa_token', data.session.access_token);
+        localStorage.setItem('abathwa_user', JSON.stringify(data.user));
       }
 
       return { user: data.user, error: null };
