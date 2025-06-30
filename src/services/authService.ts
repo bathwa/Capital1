@@ -33,6 +33,12 @@ class AuthService {
         return { user: null, error };
       }
 
+      // Store authentication data in localStorage
+      if (data.user && data.session) {
+        localStorage.setItem('abathwa_token', data.session.access_token);
+        localStorage.setItem('abathwa_user', JSON.stringify(data.user));
+      }
+
       return { user: data.user, error: null };
     } catch (error) {
       console.error('Login error:', error);
@@ -90,6 +96,12 @@ class AuthService {
           console.error('Profile creation error:', profileError);
           // Note: User is still created in auth, but profile creation failed
         }
+
+        // Store authentication data in localStorage if session exists
+        if (data.session) {
+          localStorage.setItem('abathwa_token', data.session.access_token);
+          localStorage.setItem('abathwa_user', JSON.stringify(data.user));
+        }
       }
 
       return { user: data.user, error: null };
@@ -110,6 +122,10 @@ class AuthService {
     try {
       const { error } = await supabase.auth.signOut();
       
+      // Clear localStorage regardless of Supabase signOut result
+      localStorage.removeItem('abathwa_token');
+      localStorage.removeItem('abathwa_user');
+      
       if (error) {
         console.error('Logout error:', error);
         return { error };
@@ -118,6 +134,10 @@ class AuthService {
       return { error: null };
     } catch (error) {
       console.error('Logout error:', error);
+      // Still clear localStorage even if there's an error
+      localStorage.removeItem('abathwa_token');
+      localStorage.removeItem('abathwa_user');
+      
       return { 
         error: { 
           message: 'An unexpected error occurred during logout',
@@ -195,6 +215,12 @@ class AuthService {
         return { error };
       }
 
+      // Update localStorage if verification successful
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        localStorage.setItem('abathwa_user', JSON.stringify(user));
+      }
+
       return { error: null };
     } catch (error) {
       console.error('Email verification error:', error);
@@ -249,9 +275,39 @@ class AuthService {
     }
   }
 
+  // Synchronous methods for checking authentication state
+  isAuthenticated(): boolean {
+    const token = localStorage.getItem('abathwa_token');
+    const user = localStorage.getItem('abathwa_user');
+    return !!(token && user);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem('abathwa_token');
+  }
+
+  getUser(): User | null {
+    try {
+      const userStr = localStorage.getItem('abathwa_user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+      console.error('Error parsing user from localStorage:', error);
+      return null;
+    }
+  }
+
   // Auth state change listener
   onAuthStateChange(callback: (user: User | null) => void) {
     return supabase.auth.onAuthStateChange((event, session) => {
+      // Update localStorage when auth state changes
+      if (session?.user && session?.access_token) {
+        localStorage.setItem('abathwa_token', session.access_token);
+        localStorage.setItem('abathwa_user', JSON.stringify(session.user));
+      } else {
+        localStorage.removeItem('abathwa_token');
+        localStorage.removeItem('abathwa_user');
+      }
+      
       callback(session?.user || null);
     });
   }
