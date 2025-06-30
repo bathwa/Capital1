@@ -75,7 +75,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 const initialState: AuthState = {
   user: null,
   token: null,
-  isLoading: false, // Start with false to prevent initial loading flash
+  isLoading: false,
   isAuthenticated: false,
   error: null,
 };
@@ -131,7 +131,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (response.success && response.data) {
         const { user, token } = response.data;
+        
+        // Route users to their role-specific dashboards
+        const roleRoutes = {
+          'ADMIN': '/admin-dashboard',
+          'ENTREPRENEUR': '/entrepreneur-dashboard', 
+          'INVESTOR': '/investor-dashboard',
+          'SERVICE_PROVIDER': '/service-provider-dashboard',
+          'OBSERVER': '/observer-dashboard'
+        };
+        
         dispatch({ type: 'SET_USER', payload: { user, token } });
+        
+        // Navigate to role-specific dashboard
+        const targetRoute = roleRoutes[user.role as keyof typeof roleRoutes] || '/dashboard';
+        window.location.href = targetRoute;
       } else {
         throw new Error(response.message || 'Login failed');
       }
@@ -149,6 +163,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Logout error:', error);
     } finally {
       dispatch({ type: 'CLEAR_USER' });
+      // Redirect to landing page after logout
+      window.location.href = '/';
     }
   };
 

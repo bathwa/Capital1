@@ -323,6 +323,7 @@
     "title": "Agreements",
     "investmentAgreement": "Investment Agreement",
     "nda": "Non-Disclosure Agreement",
+    "serviceAgreement": "Service Agreement",
     "generateAgreement": "Generate Agreement",
     "signAgreement": "Sign Agreement",
     "agreementStatus": "Agreement Status",
@@ -403,7 +404,8 @@
     "privacy": "Privacy",
     "security": "Security",
     "changePassword": "Change Password",
-    "twoFactorAuth": "Two-Factor Authentication"
+    "twoFactorAuth": "Two-Factor Authentication",
+    "settingsSaved": "Settings saved successfully"
   },
   "help": {
     "title": "Help & Support",

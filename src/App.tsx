@@ -19,6 +19,12 @@ import DashboardOverview from './components/dashboard/DashboardOverview';
 import OpportunityList from './components/opportunities/OpportunityList';
 import CreateOpportunityForm from './components/opportunities/CreateOpportunityForm';
 import InvestmentDashboard from './components/investments/InvestmentDashboard';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import InvestorDashboardPage from './pages/InvestorDashboardPage';
+import ServiceProviderDashboardPage from './pages/ServiceProviderDashboardPage';
+import ObserverDashboardPage from './pages/ObserverDashboardPage';
+import SettingsPage from './pages/SettingsPage';
+import AgreementsPage from './pages/AgreementsPage';
 import { useAuth } from './context/AuthContext';
 import './i18n';
 
@@ -85,13 +91,73 @@ function App() {
             <Route path="/verify-email" element={<EmailVerification />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
-            {/* Protected Routes */}
+            {/* Protected Routes - Role-based Dashboards */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Layout>
                     <DashboardOverview />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Dashboard */}
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Layout>
+                    <AdminDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Entrepreneur Dashboard */}
+            <Route
+              path="/entrepreneur-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['ENTREPRENEUR']}>
+                  <Layout>
+                    <DashboardOverview />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Investor Dashboard */}
+            <Route
+              path="/investor-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['INVESTOR']}>
+                  <Layout>
+                    <InvestorDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Service Provider Dashboard */}
+            <Route
+              path="/service-provider-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
+                  <Layout>
+                    <ServiceProviderDashboardPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Observer Dashboard */}
+            <Route
+              path="/observer-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['OBSERVER']}>
+                  <Layout>
+                    <ObserverDashboardPage />
                   </Layout>
                 </ProtectedRoute>
               }
@@ -104,6 +170,30 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <UserProfile />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings Route */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SettingsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Agreements Route */}
+            <Route
+              path="/agreements"
+              element={
+                <ProtectedRoute allowedRoles={['ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER']}>
+                  <Layout>
+                    <AgreementsPage />
                   </Layout>
                 </ProtectedRoute>
               }
