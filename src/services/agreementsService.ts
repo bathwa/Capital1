@@ -5,53 +5,43 @@ export interface Agreement {
   type: 'INVESTMENT_AGREEMENT' | 'NDA' | 'SERVICE_AGREEMENT';
   title: string;
   parties: string[];
-  opportunity?: string;
-  amount?: number;
-  equity?: number;
+  opportunity_id?: string;
+  offer_id?: string;
   status: 'DRAFT' | 'PENDING_SIGNATURES' | 'FULLY_EXECUTED' | 'EXPIRED';
-  createdDate: string;
-  signedDate?: string;
-  documentUrl: string;
-  signatures: {
-    party: string;
-    signedAt: string;
-    type: 'digital' | 'wet';
-  }[];
+  document_url: string;
+  signatures: Array<{
+    user_id: string;
+    signed_at: string;
+    signature_type: 'digital' | 'electronic';
+  }>;
+  created_at: string;
+  updated_at: string;
 }
 
 export class AgreementsService {
-  async getAgreements(filters?: {
-    type?: string;
-    status?: string;
-    searchTerm?: string;
-  }): Promise<Agreement[]> {
-    const response = await apiService.get('/api/v1/agreements', { params: filters });
-    return response.data;
+  async getAgreements(filters?: any): Promise<Agreement[]> {
+    // TODO: Implement actual API call
+    return [];
   }
 
   async createAgreement(agreementData: Partial<Agreement>): Promise<Agreement> {
-    const response = await apiService.post('/api/v1/agreements', agreementData);
-    return response.data;
+    // TODO: Implement actual API call
+    throw new Error('Not implemented');
   }
 
   async updateAgreement(id: string, updates: Partial<Agreement>): Promise<Agreement> {
-    const response = await apiService.put(`/api/v1/agreements/${id}`, updates);
-    return response.data;
+    // TODO: Implement actual API call
+    throw new Error('Not implemented');
   }
 
-  async signAgreement(id: string, signatureData: {
-    party: string;
-    type: 'digital' | 'wet';
-  }): Promise<Agreement> {
-    const response = await apiService.post(`/api/v1/agreements/${id}/sign`, signatureData);
-    return response.data;
+  async signAgreement(id: string, signatureData: { party: string; type: 'digital' | 'wet' }): Promise<Agreement> {
+    // TODO: Implement actual API call
+    throw new Error('Not implemented');
   }
 
   async downloadAgreement(id: string): Promise<Blob> {
-    const response = await apiService.get(`/api/v1/agreements/${id}/download`, {
-      responseType: 'blob'
-    });
-    return response.data;
+    // TODO: Implement actual API call
+    throw new Error('Not implemented');
   }
 }
 

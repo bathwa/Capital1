@@ -52,7 +52,7 @@ class AuthService {
       }
 
       // Fetch the complete user profile from the users table
-      const { data: userProfile, error: profileError } = await supabase
+      let { data: userProfile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', data.user.id)

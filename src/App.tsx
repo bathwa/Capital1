@@ -31,25 +31,6 @@ import ServiceRequestsPage from './pages/ServiceRequestsPage';
 import { useAuth } from './context/AuthContext';
 import './i18n';
 
-// Initialize i18n
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: 'en',
-    detection: {
-      order: ['path', 'htmlTag', 'cookie', 'navigator'],
-      caches: ['cookie'],
-    },
-    interpolation: {
-      escapeValue: false,
-    },
-  });
-
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
