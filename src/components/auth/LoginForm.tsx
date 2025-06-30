@@ -80,29 +80,13 @@ const LoginForm: React.FC = () => {
 
     try {
       await login(formData.email, formData.password, formData.rememberMe);
-      
-      // Handle remember me functionality
-      if (formData.rememberMe) {
-        localStorage.setItem('abathwa_remember_email', formData.email);
-      } else {
-        localStorage.removeItem('abathwa_remember_email');
-      }
-
-      // Redirect will be handled by the useEffect above
+      // Redirect will be handled by the login function
     } catch (err: any) {
       console.error('Login error:', err);
       
-      if (err.response?.status === 401) {
-        setError(t('auth.invalidCredentials'));
-      } else if (err.response?.status === 403) {
-        setError(t('auth.accountSuspended'));
-      } else if (err.response?.status === 429) {
-        setError(t('auth.tooManyAttempts'));
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else {
-        setError(t('errors.networkError'));
-      }
+      // Display the specific error message from the auth service
+      const errorMessage = err.message || 'An unexpected error occurred during login';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -158,7 +142,7 @@ const LoginForm: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {/* Error Message */}
           {error && (
-            <div className="bg-error-50 dark:bg-error-900 border border-error-200 dark:border-error-700 text-error-700 dark:text-error-200 px-4 py-3 rounded-lg flex items-center">
+            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg flex items-center">
               <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
               {error}
             </div>
@@ -166,7 +150,7 @@ const LoginForm: React.FC = () => {
 
           {/* Success Message */}
           {successMessage && (
-            <div className="bg-success-50 dark:bg-success-900 border border-success-200 dark:border-success-700 text-success-700 dark:text-success-200 px-4 py-3 rounded-lg">
+            <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-200 px-4 py-3 rounded-lg">
               {successMessage}
             </div>
           )}

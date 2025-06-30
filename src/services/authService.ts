@@ -4,6 +4,7 @@ import type { User, AuthError } from '@supabase/supabase-js';
 export interface LoginCredentials {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface SignupCredentials {
@@ -17,12 +18,18 @@ export interface SignupCredentials {
 }
 
 export interface AuthResponse {
-  user: User | null;
+  user: any | null;
   error: AuthError | null;
 }
 
+export interface ServiceResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
 class AuthService {
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+  async login(credentials: LoginCredentials): Promise<ServiceResponse> {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
@@ -30,33 +37,94 @@ class AuthService {
       });
 
       if (error) {
-        return { user: null, error };
+        console.error('Supabase auth error:', error);
+        return { 
+          success: false, 
+          message: this.getErrorMessage(error)
+        };
       }
 
-      // Store authentication data in localStorage
-      if (data.user && data.session) {
+      if (!data.user) {
+        return { 
+          success: false, 
+          message: 'Authentication failed - no user data received'
+        };
+      }
+
+      // Fetch the complete user profile from the users table
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        // If profile doesn't exist yet, create a basic one
+        if (profileError.code === 'PGRST116') {
+          const newProfile = {
+            id: data.user.id,
+            email: data.user.email,
+            first_name: data.user.user_metadata?.first_name || '',
+            last_name: data.user.user_metadata?.last_name || '',
+            role: data.user.user_metadata?.role || 'ENTREPRENEUR',
+            phone_number: data.user.user_metadata?.phone_number || null,
+            status: 'ACTIVE'
+          };
+
+          const { data: createdProfile, error: createError } = await supabase
+            .from('users')
+            .insert([newProfile])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Profile creation error:', createError);
+            return { 
+              success: false, 
+              message: 'Failed to create user profile'
+            };
+          }
+
+          userProfile = createdProfile;
+        } else {
+          return { 
+            success: false, 
+            message: 'Failed to fetch user profile'
+          };
+        }
+      }
+
+      // Store authentication data
+      if (data.session) {
         localStorage.setItem('abathwa_token', data.session.access_token);
-        localStorage.setItem('abathwa_user', JSON.stringify(data.user));
+        localStorage.setItem('abathwa_user', JSON.stringify(userProfile));
+        
+        // Handle remember me
+        if (credentials.rememberMe) {
+          localStorage.setItem('abathwa_remember_email', credentials.email);
+        }
       }
 
-      return { user: data.user, error: null };
-    } catch (error) {
+      return { 
+        success: true, 
+        data: { 
+          user: userProfile, 
+          token: data.session?.access_token 
+        }
+      };
+    } catch (error: any) {
       console.error('Login error:', error);
       return { 
-        user: null, 
-        error: { 
-          message: 'An unexpected error occurred during login',
-          name: 'AuthError',
-          status: 500
-        } as AuthError 
+        success: false, 
+        message: error.message || 'An unexpected error occurred during login'
       };
     }
   }
 
-  async register(credentials: SignupCredentials): Promise<AuthResponse> {
+  async register(credentials: SignupCredentials): Promise<ServiceResponse> {
     try {
       // Sign up the user with Supabase Auth
-      // The auth webhook will handle creating the user profile in the database
       const { data, error } = await supabase.auth.signUp({
         email: credentials.email,
         password: credentials.password,
@@ -72,25 +140,66 @@ class AuthService {
       });
 
       if (error) {
-        return { user: null, error };
+        console.error('Supabase signup error:', error);
+        return { 
+          success: false, 
+          message: this.getErrorMessage(error)
+        };
       }
 
-      // Store authentication data in localStorage if session exists
-      if (data.user && data.session) {
+      if (!data.user) {
+        return { 
+          success: false, 
+          message: 'Registration failed - no user data received'
+        };
+      }
+
+      // If we have a session (email confirmation disabled), create the profile
+      if (data.session) {
+        const userProfile = {
+          id: data.user.id,
+          email: data.user.email,
+          first_name: credentials.firstName,
+          last_name: credentials.lastName,
+          role: credentials.role,
+          phone_number: credentials.phoneNumber,
+          status: 'ACTIVE'
+        };
+
+        const { data: createdProfile, error: profileError } = await supabase
+          .from('users')
+          .insert([userProfile])
+          .select()
+          .single();
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Don't fail registration if profile creation fails
+        }
+
+        // Store authentication data
         localStorage.setItem('abathwa_token', data.session.access_token);
-        localStorage.setItem('abathwa_user', JSON.stringify(data.user));
+        localStorage.setItem('abathwa_user', JSON.stringify(createdProfile || userProfile));
+
+        return { 
+          success: true, 
+          data: { 
+            user: createdProfile || userProfile, 
+            token: data.session.access_token 
+          }
+        };
       }
 
-      return { user: data.user, error: null };
-    } catch (error) {
-      console.error('Signup error:', error);
+      // Email confirmation required
       return { 
-        user: null, 
-        error: { 
-          message: 'An unexpected error occurred during signup',
-          name: 'AuthError',
-          status: 500
-        } as AuthError 
+        success: true, 
+        message: 'Registration successful! Please check your email to confirm your account.'
+      };
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      return { 
+        success: false, 
+        message: error.message || 'An unexpected error occurred during registration'
       };
     }
   }
@@ -252,6 +361,30 @@ class AuthService {
     }
   }
 
+  // Helper method to convert Supabase errors to user-friendly messages
+  private getErrorMessage(error: AuthError): string {
+    switch (error.message) {
+      case 'Invalid login credentials':
+        return 'Invalid email or password. Please check your credentials and try again.';
+      case 'Email not confirmed':
+        return 'Please check your email and click the confirmation link before signing in.';
+      case 'Too many requests':
+        return 'Too many login attempts. Please wait a moment before trying again.';
+      case 'User not found':
+        return 'No account found with this email address.';
+      case 'Signup disabled':
+        return 'New account registration is currently disabled.';
+      case 'Email already registered':
+        return 'An account with this email address already exists.';
+      case 'Password should be at least 6 characters':
+        return 'Password must be at least 6 characters long.';
+      case 'Invalid email':
+        return 'Please enter a valid email address.';
+      default:
+        return error.message || 'An authentication error occurred. Please try again.';
+    }
+  }
+
   // Synchronous methods for checking authentication state
   isAuthenticated(): boolean {
     const token = localStorage.getItem('abathwa_token');
@@ -263,7 +396,7 @@ class AuthService {
     return localStorage.getItem('abathwa_token');
   }
 
-  getUser(): User | null {
+  getUser(): any | null {
     try {
       const userStr = localStorage.getItem('abathwa_user');
       return userStr ? JSON.parse(userStr) : null;

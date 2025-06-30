@@ -129,10 +129,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.login({ email, password, rememberMe });
       
-      if (response.success && response.data) {
+      if (!response.success) {
+        throw new Error(response.message || 'Login failed');
+      }
+
+      if (response.data) {
         const { user, token } = response.data;
+        dispatch({ type: 'SET_USER', payload: { user, token } });
         
-        // Route users to their role-specific dashboards
+        // Navigate to role-specific dashboard
         const roleRoutes = {
           'ADMIN': '/admin-dashboard',
           'ENTREPRENEUR': '/entrepreneur-dashboard', 
@@ -141,13 +146,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           'OBSERVER': '/observer-dashboard'
         };
         
-        dispatch({ type: 'SET_USER', payload: { user, token } });
-        
-        // Navigate to role-specific dashboard
         const targetRoute = roleRoutes[user.role as keyof typeof roleRoutes] || '/dashboard';
         window.location.href = targetRoute;
       } else {
-        throw new Error(response.message || 'Login failed');
+        throw new Error('Login failed - no user data received');
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -182,7 +184,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'CLEAR_ERROR' });
     
     try {
-      const response = await authService.register(userData);
+      const response = await authService.register({
+        email: userData.email,
+        password: userData.password,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        phoneNumber: userData.phone_number,
+        role: userData.role as 'ENTREPRENEUR' | 'INVESTOR' | 'SERVICE_PROVIDER',
+        organizationName: userData.organization_name,
+      });
       
       if (!response.success) {
         throw new Error(response.message || 'Registration failed');
@@ -198,12 +208,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (updates: Partial<User>) => {
     try {
-      const response = await authService.updateProfile(updates);
+      if (!state.user) {
+        throw new Error('No user logged in');
+      }
+
+      const response = await authService.updateUserProfile(state.user.id, updates);
       
-      if (response.success && response.data) {
+      if (response.error) {
+        throw new Error(response.error.message || 'Profile update failed');
+      }
+
+      if (response.data) {
         dispatch({ type: 'UPDATE_USER', payload: response.data });
-      } else {
-        throw new Error(response.message || 'Profile update failed');
+        // Update localStorage
+        localStorage.setItem('abathwa_user', JSON.stringify({ ...state.user, ...response.data }));
       }
     } catch (error: any) {
       console.error('Profile update error:', error);
