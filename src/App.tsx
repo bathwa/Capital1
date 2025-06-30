@@ -25,6 +25,7 @@ import ServiceProviderDashboardPage from './pages/ServiceProviderDashboardPage';
 import ObserverDashboardPage from './pages/ObserverDashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import AgreementsPage from './pages/AgreementsPage';
+import ServiceRequestsPage from './pages/ServiceRequestsPage';
 import { useAuth } from './context/AuthContext';
 import './i18n';
 
@@ -198,6 +199,18 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Service Requests Route */}
+            <Route
+              path="/service-requests"
+              element={
+                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
+                  <Layout>
+                    <ServiceRequestsPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             
             {/* Opportunities Routes */}
             <Route
@@ -240,25 +253,6 @@ function App() {
                 <ProtectedRoute allowedRoles={['INVESTOR']}>
                   <Layout>
                     <OpportunitiesPage />
-                  </Layout>
-                </ProtectedRoute>
-              }
-            />
-            
-            {/* Service Provider Routes */}
-            <Route
-              path="/service-requests"
-              element={
-                <ProtectedRoute allowedRoles={['SERVICE_PROVIDER']}>
-                  <Layout>
-                    <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm">
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        Service Requests
-                      </h1>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Manage your service requests and engagements here.
-                      </p>
-                    </div>
                   </Layout>
                 </ProtectedRoute>
               }
