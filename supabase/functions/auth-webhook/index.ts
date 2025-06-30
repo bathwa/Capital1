@@ -74,22 +74,24 @@ Deno.serve(async (req: Request) => {
       const userData = {
         id: record.id,
         email: record.email,
-        first_name: metadata.first_name || 'User',
-        last_name: metadata.last_name || 'Name',
+        first_name: (metadata.first_name && metadata.first_name.trim()) || 'User',
+        last_name: (metadata.last_name && metadata.last_name.trim()) || 'Name',
         role: metadata.role || 'ENTREPRENEUR',
         status: 'ACTIVE', // Set to ACTIVE instead of PENDING_EMAIL_CONFIRMATION
         profile_completion_percentage: 30,
         reliability_score: 0
       };
 
-      // Only add organization_id if we have one
-      if (organizationId) {
+      // Only add organization_id if we have a valid UUID
+      if (organizationId && typeof organizationId === 'string') {
         userData.organization_id = organizationId;
       }
 
-      // Only add phone_number if provided and not empty
-      if (metadata.phone_number && metadata.phone_number.trim()) {
-        userData.phone_number = metadata.phone_number;
+      // Only add phone_number if provided, not empty, and matches the expected format
+      if (metadata.phone_number && 
+          metadata.phone_number.trim() && 
+          /^\+?[1-9]\d{1,14}$/.test(metadata.phone_number.trim())) {
+        userData.phone_number = metadata.phone_number.trim();
       }
 
       const { data, error } = await supabase
@@ -98,6 +100,7 @@ Deno.serve(async (req: Request) => {
 
       if (error) {
         console.error('Error creating user profile:', error);
+        console.error('User data that failed:', userData);
         return new Response(
           JSON.stringify({ error: error.message }),
           { 
