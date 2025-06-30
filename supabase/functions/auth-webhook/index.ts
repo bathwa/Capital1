@@ -1,3 +1,6 @@
+// Import createClient at the top level
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
@@ -38,7 +41,7 @@ Deno.serve(async (req: Request) => {
           email: record.email,
           first_name: metadata.first_name || '',
           last_name: metadata.last_name || '',
-          phone_number: metadata.phone_number || null,
+          phone_number: metadata.phone_number || '',
           role: metadata.role || 'ENTREPRENEUR',
           status: 'ACTIVE',
           profile_completion_percentage: 30,
@@ -93,6 +96,3 @@ Deno.serve(async (req: Request) => {
     );
   }
 });
-
-// Import createClient at the top level
-import { createClient } from 'npm:@supabase/supabase-js@2';
