@@ -33,8 +33,30 @@ Deno.serve(async (req: Request) => {
       // Extract user metadata from the auth record
       const metadata = record.raw_user_meta_data || {};
       
+      let organizationId = null;
+
+      // If organization name is provided, create organization first
+      if (metadata.organization_name) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: metadata.organization_name,
+            owner_id: record.id,
+            status: 'PENDING'
+          })
+          .select('id')
+          .single();
+
+        if (orgError) {
+          console.error('Error creating organization:', orgError);
+          // Don't fail the entire request if organization creation fails
+        } else {
+          organizationId = orgData?.id;
+        }
+      }
+
       // Create user profile when auth user is created
-      // Ensure required fields meet database constraints (min length 1)
+      // Ensure required fields meet database constraints
       const { data, error } = await supabase
         .from('users')
         .insert({
@@ -42,12 +64,12 @@ Deno.serve(async (req: Request) => {
           email: record.email,
           first_name: metadata.first_name || 'User',
           last_name: metadata.last_name || 'Name',
-          phone_number: metadata.phone_number || '+1000000000', // Provide valid phone number format
+          phone_number: metadata.phone_number || null, // Allow null for optional field
           role: metadata.role || 'ENTREPRENEUR',
           status: 'ACTIVE',
+          organization_id: organizationId,
           profile_completion_percentage: 30,
           reliability_score: 0
-          // Remove created_at and updated_at - they have default values and triggers
         });
 
       if (error) {
@@ -59,22 +81,6 @@ Deno.serve(async (req: Request) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
-      }
-
-      // If organization name is provided, create organization
-      if (metadata.organization_name) {
-        const { error: orgError } = await supabase
-          .from('organizations')
-          .insert({
-            name: metadata.organization_name,
-            owner_id: record.id,
-            status: 'PENDING'
-          });
-
-        if (orgError) {
-          console.error('Error creating organization:', orgError);
-          // Don't fail the entire request if organization creation fails
-        }
       }
     }
 
