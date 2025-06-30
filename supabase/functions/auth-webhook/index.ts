@@ -35,7 +35,7 @@ serve(async (req) => {
           last_name: metadata.last_name || '',
           phone_number: metadata.phone_number || null,
           role: metadata.role || 'ENTREPRENEUR',
-          status: 'PENDING_EMAIL_CONFIRMATION',
+          status: 'ACTIVE', // Changed from 'PENDING_EMAIL_CONFIRMATION' to 'ACTIVE'
           profile_completion_percentage: 30,
           reliability_score: 0,
           created_at: record.created_at,

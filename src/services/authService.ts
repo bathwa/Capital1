@@ -154,37 +154,50 @@ class AuthService {
         };
       }
 
-      // If we have a session (email confirmation disabled), create the profile
+      // If we have a session (email confirmation disabled), the auth webhook will create the profile
       if (data.session) {
-        const userProfile = {
-          id: data.user.id,
-          email: data.user.email,
-          first_name: credentials.firstName,
-          last_name: credentials.lastName,
-          role: credentials.role,
-          phone_number: credentials.phoneNumber,
-          status: 'ACTIVE'
-        };
-
-        const { data: createdProfile, error: profileError } = await supabase
+        // Store authentication data - the webhook will have created the profile
+        localStorage.setItem('abathwa_token', data.session.access_token);
+        
+        // Wait a moment for the webhook to process, then fetch the profile
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Fetch the user profile created by the webhook
+        const { data: userProfile, error: profileError } = await supabase
           .from('users')
-          .insert([userProfile])
-          .select()
+          .select('*')
+          .eq('id', data.user.id)
           .single();
 
         if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't fail registration if profile creation fails
+          console.error('Profile fetch error after signup:', profileError);
+          // Fallback: create a basic profile if webhook failed
+          const fallbackProfile = {
+            id: data.user.id,
+            email: data.user.email,
+            first_name: credentials.firstName,
+            last_name: credentials.lastName,
+            role: credentials.role,
+            phone_number: credentials.phoneNumber,
+            status: 'ACTIVE'
+          };
+          localStorage.setItem('abathwa_user', JSON.stringify(fallbackProfile));
+          
+          return { 
+            success: true, 
+            data: { 
+              user: fallbackProfile, 
+              token: data.session.access_token 
+            }
+          };
         }
 
-        // Store authentication data
-        localStorage.setItem('abathwa_token', data.session.access_token);
-        localStorage.setItem('abathwa_user', JSON.stringify(createdProfile || userProfile));
+        localStorage.setItem('abathwa_user', JSON.stringify(userProfile));
 
         return { 
           success: true, 
           data: { 
-            user: createdProfile || userProfile, 
+            user: userProfile, 
             token: data.session.access_token 
           }
         };
