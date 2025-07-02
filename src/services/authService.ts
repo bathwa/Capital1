@@ -60,13 +60,47 @@ class AuthService {
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
-        // If profile doesn't exist, the auth webhook should have created it
-        // This might be a timing issue or the webhook failed
+        
+        // If profile doesn't exist (PGRST116 with 0 rows), create it
         if (profileError.code === 'PGRST116') {
-          return { 
-            success: false, 
-            message: 'User profile not found. Please contact support if this issue persists.'
+          console.log('User profile not found, creating new profile...');
+          
+          // Extract user metadata from auth user
+          const userMetadata = data.user.user_metadata || {};
+          const email = data.user.email || credentials.email;
+          
+          // Create the user profile with available data
+          const newProfile = {
+            id: data.user.id,
+            email: email,
+            first_name: userMetadata.first_name || userMetadata.firstName || '',
+            last_name: userMetadata.last_name || userMetadata.lastName || '',
+            phone_number: userMetadata.phone_number || userMetadata.phoneNumber || null,
+            role: userMetadata.role || 'ENTREPRENEUR',
+            status: 'ACTIVE',
+            profile_completion_percentage: 0,
+            reliability_score: 0,
+            preferences: {},
+            metadata: {}
           };
+
+          // Insert the new profile
+          const { data: createdProfile, error: createError } = await supabase
+            .from('users')
+            .insert([newProfile])
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Failed to create user profile:', createError);
+            return { 
+              success: false, 
+              message: 'Failed to create user profile. Please contact support.'
+            };
+          }
+
+          userProfile = createdProfile;
+          console.log('User profile created successfully');
         } else {
           return { 
             success: false, 
@@ -143,7 +177,7 @@ class AuthService {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Fetch the user profile created by the webhook
-        const { data: userProfile, error: profileError } = await supabase
+        let { data: userProfile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.user.id)
@@ -151,11 +185,46 @@ class AuthService {
 
         if (profileError) {
           console.error('Profile fetch error after signup:', profileError);
-          // If webhook failed to create profile, return error instead of trying to create it client-side
-          return { 
-            success: false, 
-            message: 'Registration completed but failed to create user profile. Please contact support.'
-          };
+          
+          // If webhook failed to create profile, create it manually
+          if (profileError.code === 'PGRST116') {
+            console.log('Creating user profile manually after signup...');
+            
+            const newProfile = {
+              id: data.user.id,
+              email: credentials.email,
+              first_name: credentials.firstName,
+              last_name: credentials.lastName,
+              phone_number: credentials.phoneNumber,
+              role: credentials.role,
+              status: 'ACTIVE',
+              profile_completion_percentage: 0,
+              reliability_score: 0,
+              preferences: {},
+              metadata: {}
+            };
+
+            const { data: createdProfile, error: createError } = await supabase
+              .from('users')
+              .insert([newProfile])
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Failed to create user profile after signup:', createError);
+              return { 
+                success: false, 
+                message: 'Registration completed but failed to create user profile. Please contact support.'
+              };
+            }
+
+            userProfile = createdProfile;
+          } else {
+            return { 
+              success: false, 
+              message: 'Registration completed but failed to create user profile. Please contact support.'
+            };
+          }
         }
 
         localStorage.setItem('abathwa_user', JSON.stringify(userProfile));
