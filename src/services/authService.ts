@@ -52,28 +52,83 @@ class AuthService {
       }
 
       // Fetch the complete user profile from the users table
-      const { data: userProfile, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      let userProfile = null;
+      let profileError = null;
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError);
+      try {
+        const { data: profile, error: fetchError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        userProfile = profile;
+        profileError = fetchError;
+      } catch (err) {
+        profileError = err;
+      }
+
+      // If profile doesn't exist, create it automatically
+      if (profileError && profileError.code === 'PGRST116') {
+        console.log('User profile not found, creating one automatically...');
         
-        // If profile doesn't exist, this indicates a backend issue
-        // The auth webhook should have created the profile
-        if (profileError.code === 'PGRST116') {
-          console.error('User profile not found - this indicates a backend data integrity issue');
+        try {
+          const metadata = data.user.user_metadata || {};
+          
+          const newUserData = {
+            id: data.user.id,
+            email: data.user.email,
+            first_name: (metadata.first_name && metadata.first_name.trim() && metadata.first_name.trim().length >= 1 && metadata.first_name.trim().length <= 50) 
+              ? metadata.first_name.trim() 
+              : 'User',
+            last_name: (metadata.last_name && metadata.last_name.trim() && metadata.last_name.trim().length >= 1 && metadata.last_name.trim().length <= 50) 
+              ? metadata.last_name.trim() 
+              : 'Name',
+            phone_number: metadata.phone_number && metadata.phone_number.trim() !== '' ? metadata.phone_number.trim() : null,
+            role: (metadata.role && ['ADMIN', 'ENTREPRENEUR', 'INVESTOR', 'SERVICE_PROVIDER', 'OBSERVER'].includes(metadata.role)) 
+              ? metadata.role 
+              : 'ENTREPRENEUR',
+            status: data.user.email_confirmed_at ? 'ACTIVE' : 'PENDING_EMAIL_CONFIRMATION',
+            organization_id: null,
+            profile_completion_percentage: 30,
+            reliability_score: 0
+          };
+
+          const { data: createdProfile, error: createError } = await supabase
+            .from('users')
+            .insert(newUserData)
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Failed to create user profile:', createError);
+            return { 
+              success: false, 
+              message: 'Failed to create user profile. Please contact support for assistance.'
+            };
+          }
+
+          userProfile = createdProfile;
+          console.log('User profile created successfully during login');
+        } catch (createErr) {
+          console.error('Error creating user profile:', createErr);
           return { 
             success: false, 
-            message: 'User profile not found. This may be due to a system issue during account creation. Please contact support for assistance.'
+            message: 'Failed to create user profile. Please contact support for assistance.'
           };
         }
-        
+      } else if (profileError) {
+        console.error('Profile fetch error:', profileError);
         return { 
           success: false, 
           message: 'Failed to fetch user profile. Please try again or contact support if the issue persists.'
+        };
+      }
+
+      if (!userProfile) {
+        return { 
+          success: false, 
+          message: 'User profile could not be retrieved or created. Please contact support for assistance.'
         };
       }
 
@@ -136,39 +191,57 @@ class AuthService {
         };
       }
 
-      // If we have a session (email confirmation disabled), the auth webhook should create the profile
+      // If we have a session (email confirmation disabled), create the profile immediately
       if (data.session) {
-        // Store authentication data
-        localStorage.setItem('abathwa_token', data.session.access_token);
-        
-        // Wait a moment for the webhook to process, then fetch the profile
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Fetch the user profile created by the webhook
+        // Create user profile directly since webhook might not be set up
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          first_name: credentials.firstName.trim(),
+          last_name: credentials.lastName.trim(),
+          phone_number: credentials.phoneNumber.trim() || null,
+          role: credentials.role,
+          status: 'ACTIVE',
+          organization_id: null,
+          profile_completion_percentage: 30,
+          reliability_score: 0
+        };
+
         const { data: userProfile, error: profileError } = await supabase
           .from('users')
-          .select('*')
-          .eq('id', data.user.id)
+          .insert(userData)
+          .select()
           .single();
 
         if (profileError) {
-          console.error('Profile fetch error after signup:', profileError);
+          console.error('Profile creation error after signup:', profileError);
           
-          // If webhook failed to create profile, this is a backend issue
-          if (profileError.code === 'PGRST116') {
-            console.error('User profile not created by webhook - backend issue');
+          // If profile already exists, fetch it
+          if (profileError.code === '23505') { // Unique constraint violation
+            const { data: existingProfile, error: fetchError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+
+            if (fetchError) {
+              return { 
+                success: false, 
+                message: 'Registration completed but failed to fetch user profile. Please try logging in.'
+              };
+            }
+
+            userProfile = existingProfile;
+          } else {
             return { 
               success: false, 
-              message: 'Registration completed but user profile was not created properly. Please contact support for assistance.'
+              message: 'Registration completed but failed to create user profile. Please contact support for assistance.'
             };
           }
-          
-          return { 
-            success: false, 
-            message: 'Registration completed but failed to fetch user profile. Please try logging in or contact support.'
-          };
         }
 
+        // Store authentication data
+        localStorage.setItem('abathwa_token', data.session.access_token);
         localStorage.setItem('abathwa_user', JSON.stringify(userProfile));
 
         return { 
