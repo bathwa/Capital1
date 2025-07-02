@@ -60,33 +60,13 @@ class AuthService {
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
-        // If profile doesn't exist yet, create a basic one
+        // If profile doesn't exist, the auth webhook should have created it
+        // This might be a timing issue or the webhook failed
         if (profileError.code === 'PGRST116') {
-          const newProfile = {
-            id: data.user.id,
-            email: data.user.email,
-            first_name: data.user.user_metadata?.first_name || '',
-            last_name: data.user.user_metadata?.last_name || '',
-            role: data.user.user_metadata?.role || 'ENTREPRENEUR',
-            phone_number: data.user.user_metadata?.phone_number || null,
-            status: 'ACTIVE'
+          return { 
+            success: false, 
+            message: 'User profile not found. Please contact support if this issue persists.'
           };
-
-          const { data: createdProfile, error: createError } = await supabase
-            .from('users')
-            .insert([newProfile])
-            .select()
-            .single();
-
-          if (createError) {
-            console.error('Profile creation error:', createError);
-            return { 
-              success: false, 
-              message: 'Failed to create user profile'
-            };
-          }
-
-          userProfile = createdProfile;
         } else {
           return { 
             success: false, 
@@ -171,24 +151,10 @@ class AuthService {
 
         if (profileError) {
           console.error('Profile fetch error after signup:', profileError);
-          // Fallback: create a basic profile if webhook failed
-          const fallbackProfile = {
-            id: data.user.id,
-            email: data.user.email,
-            first_name: credentials.firstName,
-            last_name: credentials.lastName,
-            role: credentials.role,
-            phone_number: credentials.phoneNumber,
-            status: 'ACTIVE'
-          };
-          localStorage.setItem('abathwa_user', JSON.stringify(fallbackProfile));
-          
+          // If webhook failed to create profile, return error instead of trying to create it client-side
           return { 
-            success: true, 
-            data: { 
-              user: fallbackProfile, 
-              token: data.session.access_token 
-            }
+            success: false, 
+            message: 'Registration completed but failed to create user profile. Please contact support.'
           };
         }
 
