@@ -52,7 +52,7 @@ class AuthService {
       }
 
       // Fetch the complete user profile from the users table
-      let { data: userProfile, error: profileError } = await supabase
+      const { data: userProfile, error: profileError } = await supabase
         .from('users')
         .select('*')
         .eq('id', data.user.id)
@@ -61,52 +61,20 @@ class AuthService {
       if (profileError) {
         console.error('Profile fetch error:', profileError);
         
-        // If profile doesn't exist (PGRST116 with 0 rows), create it
+        // If profile doesn't exist, this indicates a backend issue
+        // The auth webhook should have created the profile
         if (profileError.code === 'PGRST116') {
-          console.log('User profile not found, creating new profile...');
-          
-          // Extract user metadata from auth user
-          const userMetadata = data.user.user_metadata || {};
-          const email = data.user.email || credentials.email;
-          
-          // Create the user profile with available data
-          const newProfile = {
-            id: data.user.id,
-            email: email,
-            first_name: userMetadata.first_name || userMetadata.firstName || '',
-            last_name: userMetadata.last_name || userMetadata.lastName || '',
-            phone_number: userMetadata.phone_number || userMetadata.phoneNumber || null,
-            role: userMetadata.role || 'ENTREPRENEUR',
-            status: 'ACTIVE',
-            profile_completion_percentage: 0,
-            reliability_score: 0,
-            preferences: {},
-            metadata: {}
-          };
-
-          // Insert the new profile
-          const { data: createdProfile, error: createError } = await supabase
-            .from('users')
-            .insert([newProfile])
-            .select()
-            .single();
-
-          if (createError) {
-            console.error('Failed to create user profile:', createError);
-            return { 
-              success: false, 
-              message: 'Failed to create user profile. Please contact support.'
-            };
-          }
-
-          userProfile = createdProfile;
-          console.log('User profile created successfully');
-        } else {
+          console.error('User profile not found - this indicates a backend data integrity issue');
           return { 
             success: false, 
-            message: 'Failed to fetch user profile'
+            message: 'User profile not found. This may be due to a system issue during account creation. Please contact support for assistance.'
           };
         }
+        
+        return { 
+          success: false, 
+          message: 'Failed to fetch user profile. Please try again or contact support if the issue persists.'
+        };
       }
 
       // Store authentication data
@@ -168,16 +136,16 @@ class AuthService {
         };
       }
 
-      // If we have a session (email confirmation disabled), the auth webhook will create the profile
+      // If we have a session (email confirmation disabled), the auth webhook should create the profile
       if (data.session) {
-        // Store authentication data - the webhook will have created the profile
+        // Store authentication data
         localStorage.setItem('abathwa_token', data.session.access_token);
         
         // Wait a moment for the webhook to process, then fetch the profile
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Fetch the user profile created by the webhook
-        let { data: userProfile, error: profileError } = await supabase
+        const { data: userProfile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', data.user.id)
@@ -186,45 +154,19 @@ class AuthService {
         if (profileError) {
           console.error('Profile fetch error after signup:', profileError);
           
-          // If webhook failed to create profile, create it manually
+          // If webhook failed to create profile, this is a backend issue
           if (profileError.code === 'PGRST116') {
-            console.log('Creating user profile manually after signup...');
-            
-            const newProfile = {
-              id: data.user.id,
-              email: credentials.email,
-              first_name: credentials.firstName,
-              last_name: credentials.lastName,
-              phone_number: credentials.phoneNumber,
-              role: credentials.role,
-              status: 'ACTIVE',
-              profile_completion_percentage: 0,
-              reliability_score: 0,
-              preferences: {},
-              metadata: {}
-            };
-
-            const { data: createdProfile, error: createError } = await supabase
-              .from('users')
-              .insert([newProfile])
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('Failed to create user profile after signup:', createError);
-              return { 
-                success: false, 
-                message: 'Registration completed but failed to create user profile. Please contact support.'
-              };
-            }
-
-            userProfile = createdProfile;
-          } else {
+            console.error('User profile not created by webhook - backend issue');
             return { 
               success: false, 
-              message: 'Registration completed but failed to create user profile. Please contact support.'
+              message: 'Registration completed but user profile was not created properly. Please contact support for assistance.'
             };
           }
+          
+          return { 
+            success: false, 
+            message: 'Registration completed but failed to fetch user profile. Please try logging in or contact support.'
+          };
         }
 
         localStorage.setItem('abathwa_user', JSON.stringify(userProfile));
