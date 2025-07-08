@@ -207,7 +207,7 @@ class AuthService {
           reliability_score: 0
         };
 
-        const { data: userProfile, error: profileError } = await supabase
+        let { data: userProfile, error: profileError } = await supabase
           .from('users')
           .insert(userData)
           .select()
